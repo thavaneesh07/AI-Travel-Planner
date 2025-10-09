@@ -22,3 +22,9 @@ travel_planner.db  # optional: ignore if you don't want to push local DB
 # OS system files
 .DS_Store
 Thumbs.db
+
+# Node / React
+node_modules/
+build/
+dist/
+
