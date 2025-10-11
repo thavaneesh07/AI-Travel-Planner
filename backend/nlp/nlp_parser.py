@@ -1,26 +1,45 @@
 # backend/nlp/nlp_parser.py
 import re
 import datetime
+import calendar
 import spacy
+from difflib import get_close_matches
 from dateparser.search import search_dates
+
+# ==========================================================
+# HELPER FUNCTIONS
+# ==========================================================
+def _strip_budget_like_text(q: str) -> str:
+    """
+    Remove budget/money tokens to avoid interfering with date parsing.
+    Examples: '$1200', '15k', '~2,500', 'about 3k', 'under 5,000'
+    """
+    q = re.sub(r"\$\s*[\d,]+(?:\.\d+)?", " ", q)                        # $1200, $1,200.50
+    q = re.sub(r"\b[\d,]+(?:\.\d+)?\s*k\b", " ", q, flags=re.IGNORECASE) # 2.5k, 15k
+    q = re.sub(r"\b(?:budget|around|under|approx\.?|about|~|cost|price|of|with)\b", " ", q, flags=re.IGNORECASE)
+    return q
 
 # Load SpaCy English model
 nlp = spacy.load("en_core_web_sm")
 
-MONTHS = set([
+# --- Constants ---
+MONTHS = {
     "january","february","march","april","may","june","july","august",
     "september","october","november","december",
     "jan","feb","mar","apr","may","jun","jul","aug","sep","sept","oct","nov","dec"
-])
+}
+STOP_WORDS = {"next", "this", "coming", "week", "month", "year", "from", "between", "to", "and", "on", "in", "during"}
+RELATIVE_DATE_WORDS = {
+    "today", "tomorrow", "tonight", "week", "weekend", "month", "year",
+    "monday","tuesday","wednesday","thursday","friday","saturday","sunday",
+    "next","coming"
+}
 
-STOP_WORDS = set(["next", "this", "coming", "week", "month", "year", "from", "between", "to", "and", "on", "in", "during"])
-
+# ==========================================================
+# DESTINATION EXTRACTION
+# ==========================================================
 def extract_destination(doc):
-    """
-    Extract destination from the SpaCy doc.
-    Prefer multi-word proper nouns (e.g., New York City).
-    Stop when hitting month names, digits, or relative phrases.
-    """
+    """Extract destination from user query."""
     candidate = []
     started = False
     for token in doc:
@@ -28,134 +47,212 @@ def extract_destination(doc):
             started = True
             continue
         if started:
-            if token.pos_ == "PROPN" and token.lower_ not in MONTHS and token.lower_ not in STOP_WORDS:
+            if (
+                token.pos_ in ["PROPN", "NOUN"]
+                and token.lower_ not in MONTHS
+                and token.lower_ not in STOP_WORDS
+                and token.lower_ not in RELATIVE_DATE_WORDS
+            ):
                 candidate.append(token.text)
+            elif token.lower_ == "the":  # allow "the Maldives"
+                continue
             else:
                 break
     if candidate:
         return " ".join(candidate)
-    # fallback: longest GPE/LOC
+    # fallback: longest GPE/LOC entity
     locations = [ent.text for ent in doc.ents if ent.label_ in ["GPE", "LOC"]]
-    if locations:
-        return max(locations, key=len)
-    return None
+    return max(locations, key=len) if locations else None
 
+# ==========================================================
+# DATE EXTRACTION
+# ==========================================================
 def extract_dates(query: str):
-    """
-    Extract start_date and end_date as 'YYYY-MM-DD' strings.
-    Handles ranges, month-only phrases, relative dates, and hyphenated day ranges.
-    """
     today = datetime.date.today()
     settings = {"PREFER_DATES_FROM": "future", "RELATIVE_BASE": datetime.datetime.now()}
+    ql = query.lower()
 
-    # 1️⃣ Hyphenated ranges like "Oct 1-7 2025" or "October 1-7 2025"
-    hyphen_range = re.search(r"([A-Za-z]+ \d{1,2})-(\d{1,2}) (\d{4})", query)
-    if hyphen_range:
-        start_str, end_day, year = hyphen_range.groups()
-        try:
-            start_date = datetime.datetime.strptime(f"{start_str} {year}", "%b %d %Y").date()
-        except ValueError:
-            start_date = datetime.datetime.strptime(f"{start_str} {year}", "%B %d %Y").date()
-        end_date = datetime.date(int(year), start_date.month, int(end_day))
-        return start_date.strftime("%Y-%m-%d"), end_date.strftime("%Y-%m-%d")
+    start_date, end_date = None, None
 
-    # 2️⃣ 'from X to Y' or 'between X and Y'
-    range_pattern = r"(?:from|between)\s+(.*?)\s+(?:to|and)\s+(.*?)(?:,|$)"
-    range_match = re.search(range_pattern, query, re.IGNORECASE)
+    # --- Relative phrases ---
+    if "tomorrow" in ql:
+        s = today + datetime.timedelta(days=1)
+        return s.strftime("%Y-%m-%d"), s.strftime("%Y-%m-%d"), 1
+    if "day after tomorrow" in ql:
+        s = today + datetime.timedelta(days=2)
+        return s.strftime("%Y-%m-%d"), s.strftime("%Y-%m-%d"), 1
+    if "next week" in ql:
+        start = today + datetime.timedelta(days=(7 - today.weekday()))
+        end = start + datetime.timedelta(days=6)
+        return start.strftime("%Y-%m-%d"), end.strftime("%Y-%m-%d"), 7
+    if "next weekend" in ql:
+        days_ahead = (5 - today.weekday()) % 7
+        start = today + datetime.timedelta(days=days_ahead)
+        end = start + datetime.timedelta(days=1)
+        return start.strftime("%Y-%m-%d"), end.strftime("%Y-%m-%d"), 2
+
+    # --- Explicit ranges: "May 5-10 2025" ---
+    range_match = re.search(r"([A-Za-z]+)\s+(\d{1,2})(?:st|nd|rd|th)?\s*[-–]\s*(\d{1,2})(?:,?\s*(\d{4}))?", query)
     if range_match:
-        left, right = range_match.groups()
-        parsed_left = search_dates(left, settings=settings)
-        parsed_right = search_dates(right, settings=settings)
-        if parsed_left and parsed_right:
-            s = parsed_left[0][1].date()
-            e = parsed_right[0][1].date()
-            if s < today:
-                try:
-                    s = s.replace(year=today.year + 1)
-                    e = e.replace(year=today.year + 1)
-                except ValueError:
-                    pass
-            return s.strftime("%Y-%m-%d"), e.strftime("%Y-%m-%d")
-
-    # 3️⃣ Month-only phrases like "in December" or "December trip"
-    month_match = None
-    for m in MONTHS:
-        if re.search(rf"\b{m}\b", query.lower()):
-            month_match = m
-            break
-    if month_match:
+        month, start_day, end_day, year = range_match.groups()
+        year = year or str(today.year)
         try:
-            month_num = datetime.datetime.strptime(month_match, "%B").month
+            start_date = datetime.datetime.strptime(f"{month} {start_day} {year}", "%B %d %Y").date()
         except ValueError:
-            month_num = datetime.datetime.strptime(month_match, "%b").month
-        year = today.year
-        if month_num < today.month:
-            year += 1
-        start_date = datetime.date(year, month_num, 1)
-        if month_num < 12:
-            end_date = datetime.date(year, month_num + 1, 1) - datetime.timedelta(days=1)
-        else:
-            end_date = datetime.date(year, 12, 31)
-        return start_date.strftime("%Y-%m-%d"), end_date.strftime("%Y-%m-%d")
+            start_date = datetime.datetime.strptime(f"{month} {start_day} {year}", "%b %d %Y").date()
+        end_date = datetime.date(start_date.year, start_date.month, int(end_day))
 
-    # 4️⃣ Fallback: search_dates for relative phrases
-    parsed = search_dates(query, settings=settings)
-    if parsed:
-        s = parsed[0][1].date()
-        e = parsed[-1][1].date() if len(parsed) > 1 else None
-        if s < today:
-            try:
-                s = s.replace(year=today.year + 1)
-                if e:
-                    e = e.replace(year=today.year + 1)
-            except ValueError:
-                pass
-        return s.strftime("%Y-%m-%d"), e.strftime("%Y-%m-%d") if e else None
+    # --- "from X to Y" or "between X and Y" ---
+    if not start_date:
+        range_pattern = r"(?:from|between)\s+(.*?)\s+(?:to|and)\s+(.*?)(?:,|$)"
+        match = re.search(range_pattern, query, re.IGNORECASE)
+        if match:
+            left, right = match.groups()
+            parsed_left = search_dates(left, settings=settings)
+            parsed_right = search_dates(right, settings=settings)
+            if parsed_left and parsed_right:
+                start_date = parsed_left[0][1].date()
+                end_date = parsed_right[0][1].date()
+                # Align year if necessary
+                if start_date.year != end_date.year and (abs((end_date - start_date).days) > 180):
+                    start_date = start_date.replace(year=end_date.year)
 
-    return None, None
+    # --- Month-only phrases ---
+    if not start_date:
+        for m in range(1, 13):
+            month_name = datetime.date(2000, m, 1).strftime("%B").lower()
+            if month_name in ql:
+                year = today.year if m >= today.month else today.year + 1
+                start_date = datetime.date(year, m, 1)
+                last_day = calendar.monthrange(year, m)[1]
+                end_date = datetime.date(year, m, last_day)
+                break
 
+    # --- Fallback: dateparser ---
+    if not start_date:
+        cleaned_query = _strip_budget_like_text(query)
+        parsed = search_dates(cleaned_query, settings=settings)
+        if parsed:
+            start_date = parsed[0][1].date()
+            if len(parsed) > 1:
+                end_date = parsed[-1][1].date()
+
+    # --- Normalize dates ---
+    if start_date:
+        if not end_date:
+            end_date = start_date + datetime.timedelta(days=3)
+        if end_date < start_date:
+            start_date, end_date = end_date, start_date
+        explicit_year = bool(re.search(r"\b\d{4}\b", query))
+        if not explicit_year and end_date < today:
+            start_date = start_date.replace(year=start_date.year + 1)
+            end_date = end_date.replace(year=end_date.year + 1)
+        start_date = start_date.strftime("%Y-%m-%d")
+        end_date = end_date.strftime("%Y-%m-%d")
+        trip_duration = (datetime.datetime.strptime(end_date, "%Y-%m-%d") -
+                         datetime.datetime.strptime(start_date, "%Y-%m-%d")).days + 1
+        return start_date, end_date, trip_duration
+
+    return None, None, None
+
+# ==========================================================
+# GROUP SIZE EXTRACTION
+# ==========================================================
+def extract_group_size(query: str, profile: str):
+    # Try explicit numbers like "5 friends" or "family of 6"
+    match = re.search(r"(\d+)\s+(?:friends|people|persons|members)", query.lower())
+    if match:
+        return int(match.group(1))
+    if profile == "family":
+        match = re.search(r"family of (\d+)", query.lower())
+        if match:
+            return int(match.group(1))
+    # Fallback: default from profile
+    profiles = {"solo": 1, "couple": 2, "family": 4, "friends": 3}
+    return profiles.get(profile, 1)
+
+# ==========================================================
+# MAIN PARSER FUNCTION
+# ==========================================================
 def parse_user_query(query: str):
     doc = nlp(query)
     query_lower = query.lower()
 
-    # 1️⃣ Destination
+    # Destination
     destination = extract_destination(doc)
 
-    # 2️⃣ Dates
-    start_date, end_date = extract_dates(query)
+    # Dates
+    start_date, end_date, trip_duration = extract_dates(query)
 
-    # 3️⃣ Budget (anchored to keywords to avoid picking up years)
+    # Budget
     budget_match = re.search(
-        r"(?:budget|around|under|approx\.?)\s*\$?\s?(\d+)(k)?",
+        r"(?:budget|around|under|approx\.?|cost|about|price|of|with|~)\s*\$?\s?([\d,]+(?:\.\d+)?)(k)?",
         query_lower
     )
     budget = None
     if budget_match:
-        num = int(budget_match.group(1))
-        if budget_match.group(2):  # has 'k'
-            num *= 1000
-        budget = num
+        num_str = budget_match.group(1).replace(",", "")
+        try:
+            num = float(num_str)
+            if budget_match.group(2):  # 'k'
+                num *= 1000
+            budget = int(num)
+        except ValueError:
+            pass
 
-    # 4️⃣ Profile
-    profiles = ["solo", "couple", "family", "friends"]
-    profile = next((p for p in profiles if p in query_lower), None)
+    # Profile + group size
+    profiles = {"solo": 1, "couple": 2, "family": 4, "friends": 3}
+    profile = None
+    for p in profiles.keys():
+        if p in query_lower:
+            profile = p
+            break
+    group_size = extract_group_size(query, profile)
 
-    # 5️⃣ Interests
+    # Accommodation
+    accommodations = ["hotel", "airbnb", "hostel", "resort", "villa", "apartment", "homestay"]
+    accommodation = next((a for a in accommodations if a in query_lower), None)
+
+    # Interests
     interest_keywords = [
         "food", "art", "history", "adventure", "shopping", "beaches",
         "hiking", "culture", "nightlife", "photography", "relaxation", "wildlife"
     ]
     interests = [i for i in interest_keywords if re.search(rf"\b{i}\b", query_lower)]
 
+    # Synonym map
+    synonyms = {
+        "foodie": "food",
+        "art lover": "art",
+        "party": "nightlife",
+        "hiker": "hiking",
+        "beach": "beaches"
+    }
+    for syn, canonical in synonyms.items():
+        if syn in query_lower and canonical not in interests:
+            interests.append(canonical)
+
+    # Fuzzy match
+    for word in query_lower.split():
+        match = get_close_matches(word, interest_keywords, n=1, cutoff=0.8)
+        if match and match[0] not in interests:
+            interests.append(match[0])
+
     return {
         "destination": destination,
         "start_date": start_date,
         "end_date": end_date,
+        "trip_duration": trip_duration,
         "budget": budget,
         "user_profile": profile,
+        "group_size": group_size,
+        "accommodation": accommodation,
         "interests": interests,
     }
 
+# ==========================================================
+# TESTING
+# ==========================================================
 if __name__ == "__main__":
     test_queries = [
         "Trip to Paris Oct 1-7 2025, budget 1500, solo, history and food",
@@ -164,7 +261,10 @@ if __name__ == "__main__":
         "Solo trip to Bali next week, budget $800",
         "Couple trip between July 10 and July 15 to Switzerland, budget 5000, adventure and photography",
         "Friends trip to New York City in March, budget 3500, nightlife and food",
-        "Trip to Tokyo October 1-7 2025, budget 5k, couple"
+        "Trip to Tokyo October 1-7 2025, budget 5k, couple",
+        "Family holiday in Dubai in November, around 3000 USD",
+        "Plan a trip to Rome from 5th May to 10th May 2025 with a budget of 2500",
+        "Couple vacation in Sydney between 2nd April and 6th April 2025, cost 2000 dollars"
     ]
 
     for q in test_queries:
