@@ -1,10 +1,16 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from typing import List, Optional
 import uuid
 
-app = FastAPI(title="AI Travel Planner - Phase 1")
+# ✅ Import local modules
+from nlp.nlp_parser import parse_user_query
+from itinerary.itinerary_generator import generate_itinerary   # <-- make sure file is inside backend/itinerary/
+from api.weather_service import get_weather_forecast            # <-- make sure file is inside backend/api/
 
+app = FastAPI(title="AI Travel Planner - Phase 3")
+
+# --- Request Models ---
 class ParseReq(BaseModel):
     message: str
 
@@ -16,34 +22,79 @@ class ItinCreateReq(BaseModel):
     user_profile: Optional[str] = "solo"
     interests: List[str] = []
 
+# --- 1️⃣ NLP Parser Endpoint ---
 @app.post("/api/parse")
 def parse(req: ParseReq):
-    # placeholder: will be replaced in Phase 2
-    return {
-        "destination": "Paris",
-        "start_date": "2025-10-01",
-        "end_date": "2025-10-07",
-        "budget": 1500,
-        "user_profile": "solo",
-        "interests": ["history","food"]
-    }
+    """Parse user natural language message into structured travel details."""
+    if not req.message:
+        raise HTTPException(status_code=400, detail="Missing 'message' field")
 
+    result = parse_user_query(req.message)
+    if not result:
+        raise HTTPException(status_code=422, detail="Could not extract data from message")
+    return result
+
+
+# --- 2️⃣ Create Itinerary ---
 @app.post("/api/itineraries")
 def create_itinerary(req: ItinCreateReq):
-    itin_id = "ITINERARY_ID_" + uuid.uuid4().hex[:8]
-    return {"itinerary_id": itin_id, "status":"completed", "days": [
-        {"day":1,"date":req.start_date,
-         "morning":"Check-in at budget hotel near Montmartre",
-         "afternoon":"Visit Eiffel Tower & Seine River cruise",
-         "evening":"Dinner at Le Bouillon Pigalle",
-         "estimated_cost":120}
-    ]}
+    """Generate a dynamic day-by-day itinerary using AI logic."""
+    itinerary = generate_itinerary(
+        destination=req.destination,
+        start_date=req.start_date,
+        end_date=req.end_date,
+        budget=req.budget,
+        interests=req.interests
+    )
+    return itinerary
 
+
+# --- 3️⃣ Combined Planner (NLP + Itinerary) ---
+class PlanReq(BaseModel):
+    message: str
+
+@app.post("/api/plan")
+def plan_trip(req: PlanReq):
+    """Combine NLP parsing + itinerary generation."""
+    parsed = parse_user_query(req.message)
+
+    if not parsed.get("destination"):
+        return {"error": "Destination not detected. Please specify your destination."}
+
+    itinerary = generate_itinerary(
+        destination=parsed.get("destination"),
+        start_date=parsed.get("start_date"),
+        end_date=parsed.get("end_date"),
+        budget=parsed.get("budget", 1000),
+        interests=parsed.get("interests", [])
+    )
+
+    return {"parsed_query": parsed, "generated_itinerary": itinerary}
+
+
+# --- 4️⃣ Weather API ---
+@app.get("/api/weather/{city}")
+def get_weather(city: str):
+    """Fetch mock or live weather forecast for a city."""
+    forecast = get_weather_forecast(city)
+    return {"city": city, "forecast": forecast}
+
+
+# --- 5️⃣ (Optional) Get Itinerary by ID ---
 @app.get("/api/itineraries/{itinerary_id}")
 def get_itinerary(itinerary_id: str):
-    return {"itinerary_id": itinerary_id, "destination":"Paris", "days":[
-        {"day":1,"date":"2025-10-01",
-         "morning":"Sample","afternoon":"Sample","evening":"Sample",
-         "estimated_cost":100}
-    ], "total_estimated_cost":100}
-
+    return {
+        "itinerary_id": itinerary_id,
+        "destination": "Paris",
+        "days": [
+            {
+                "day": 1,
+                "date": "2025-10-01",
+                "morning": "Sample",
+                "afternoon": "Sample",
+                "evening": "Sample",
+                "estimated_cost": 100,
+            }
+        ],
+        "total_estimated_cost": 100,
+    }
