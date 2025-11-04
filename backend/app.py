@@ -2,6 +2,8 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from typing import List, Optional
 import uuid
+from fastapi.middleware.cors import CORSMiddleware
+
 
 # ✅ Import local modules
 from nlp.nlp_parser import parse_user_query
@@ -10,6 +12,13 @@ from api.weather_service import get_weather_forecast            # <-- make sure 
 
 app = FastAPI(title="AI Travel Planner - Phase 3")
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],  # or ["*"] for easier dev
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 # --- Request Models ---
 class ParseReq(BaseModel):
     message: str

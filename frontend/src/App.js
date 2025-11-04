@@ -1,16 +1,27 @@
-import React from 'react';
-import Dashboard from './pages/Dashboard';
+import React from "react";
+import Chatbot from "./components/Chatbot";
 
 function App() {
-  // Pretend itinerary data (replace with real from backend later)
-  const mockItinerary = {
-    destination: 'Paris',
-    activities: [{ name: 'Eiffel Tower', lat: 48.8584, lon: 2.2945 }],
-    days: [{ morning: 'Breakfast', afternoon: 'Museum', evening: 'Dinner' }],
-    costs: { food: 200, hotel: 500 },
-  };
-
-  return <Dashboard itinerary={mockItinerary} />;
+  return (
+    <div style={{
+      minHeight: "100vh",
+      backgroundColor: "#f9f9f9",
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "flex-start",
+      paddingTop: "50px"
+    }}>
+      <div style={{
+        width: "600px",
+        background: "white",
+        borderRadius: "10px",
+        boxShadow: "0 0 10px rgba(0,0,0,0.1)",
+        padding: "20px"
+      }}>
+        <Chatbot />
+      </div>
+    </div>
+  );
 }
 
 export default App;
