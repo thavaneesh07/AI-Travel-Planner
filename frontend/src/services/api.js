@@ -1,4 +1,3 @@
-// src/services/api.js
 import axios from "axios";
 
 // ✅ Base URL of your FastAPI backend
@@ -28,5 +27,14 @@ export async function generateItinerary(data) {
  */
 export async function getWeather(city) {
   const res = await axios.get(`${API_BASE_URL}/weather/${city}`);
+  return res.data;
+}
+
+/**
+ * 🔹 NEW — Combined endpoint that does NLP + itinerary + weather in one step
+ * @param {string} message - Natural language trip request
+ */
+export async function planTrip(message) {
+  const res = await axios.post(`${API_BASE_URL}/plan`, { message });
   return res.data;
 }
