@@ -14,7 +14,7 @@ app = FastAPI(title="AI Travel Planner - Phase 3")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # or ["*"] for easier dev
+    allow_origins=["http://localhost:5173"],  # or ["*"] for easier dev
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
