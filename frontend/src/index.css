@@ -1,1 +1,12 @@
 @import "tailwindcss";
+/* Optional: cleaner scrollbar for the horizontal timeline */
+::-webkit-scrollbar {
+  height: 6px;
+}
+::-webkit-scrollbar-thumb {
+  background: #a5b4fc; /* Indigo-300 */
+  border-radius: 3px;
+}
+::-webkit-scrollbar-track {
+  background: #eef2ff; /* Indigo-50 */
+}

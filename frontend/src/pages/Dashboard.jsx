@@ -4,6 +4,7 @@ import { planTrip } from "../services/api";
 import WeatherChart from "../components/WeatherChart";
 import BudgetChart from "../components/BudgetChart";
 import MapView from "../components/MapView";
+import Timeline from "../components/Timeline";
 
 
 
@@ -74,38 +75,9 @@ function Dashboard() {
           (d) => `${d.morning}, ${d.afternoon}, ${d.evening}`
           )}
         />
-
-
-          {/* Itinerary Section */}
-          <div>
-            <h3 className="text-2xl font-bold text-blue-700 mb-4 flex items-center gap-2">
-              📅 Generated Itinerary
-            </h3>
-            <ul className="space-y-4">
-              {tripData.generated_itinerary?.days?.map((day) => (
-                <li key={day.day} className="p-4 border border-gray-200 rounded-xl bg-blue-50">
-                  <p className="font-semibold text-lg text-blue-900">
-                    Day {day.day} — {day.date}
-                  </p>
-                  <p className="text-gray-700">
-                    🌤 <strong>Weather:</strong> {day.weather?.temp}°C, {day.weather?.desc}
-                  </p>
-                  <p>🌅 <strong>Morning:</strong> {day.morning}</p>
-                  <p>🌇 <strong>Afternoon:</strong> {day.afternoon}</p>
-                  <p>🌃 <strong>Evening:</strong> {day.evening}</p>
-                  <p className="font-semibold text-green-700 mt-1">
-                    💸 Cost: ${day.estimated_cost}
-                  </p>
-                </li>
-              ))}
-            </ul>
-            <p className="mt-6 text-xl font-semibold text-green-600 text-right">
-              💵 Total Estimated Cost: ${tripData.generated_itinerary?.total_estimated_cost}
-            </p>
-            <WeatherChart days={tripData.generated_itinerary?.days} />
+           <Timeline days={tripData.generated_itinerary?.days} />
+           <WeatherChart days={tripData.generated_itinerary?.days} />
             <BudgetChart days={tripData.generated_itinerary?.days} />
-
-          </div>
         </div>
       )}
     </div>

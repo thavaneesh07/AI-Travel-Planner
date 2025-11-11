@@ -1,5 +1,5 @@
 // src/components/MapView.jsx
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState,useRef } from "react";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import { useMap } from "react-leaflet";
@@ -27,10 +27,13 @@ function FitBounds({ markers }) {
 function MapView({ activities = [], destination }) {
   const [center, setCenter] = useState([48.8566, 2.3522]); // Default: Paris
   const [markers, setMarkers] = useState([]);
+  const mapRef = useRef(null);
+
 
   // 🗺️ Fetch destination coordinates
   useEffect(() => {
     if (!destination) return;
+       setMarkers([]); // ✅ clear previous markers before fetching new destination
 
     const fetchCoords = async () => {
   try {
@@ -45,6 +48,10 @@ function MapView({ activities = [], destination }) {
       const lat = parseFloat(data[0].lat);
       const lon = parseFloat(data[0].lon);
       setCenter([lat, lon]);
+      if (mapRef.current) {
+  mapRef.current.setView([lat, lon], 12); // 👈 instantly recenter the map
+    }
+
     } else {
       console.warn("No geocoding results for:", destination);
     }
@@ -106,7 +113,15 @@ useEffect(() => {
 
   return (
   <div className="w-full h-[400px] mb-8 rounded-lg overflow-hidden shadow-md border border-gray-200">
-    <MapContainer center={center} zoom={12} style={{ height: "100%", width: "100%" }}>
+    <div className="transition-opacity duration-500 ease-in-out opacity-100"></div>
+    <MapContainer
+  key={destination}
+  center={center}
+  zoom={12}
+  style={{ height: "100%", width: "100%" }}
+  whenCreated={(mapInstance) => (mapRef.current = mapInstance)}  // 👈 store map instance
+>
+
       <ChangeView center={center} />  {/* 👈 Add this line */}
        <FitBounds markers={markers} />
       <TileLayer
