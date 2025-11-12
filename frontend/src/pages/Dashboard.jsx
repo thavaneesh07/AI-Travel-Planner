@@ -12,6 +12,10 @@ function Dashboard() {
   const [message, setMessage] = useState("");
   const [tripData, setTripData] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [selectedDay, setSelectedDay] = useState(null);
+  const [showBudget, setShowBudget] = useState(false);
+
+
 
   const handlePlanTrip = async () => {
     if (!message.trim()) return;
@@ -70,14 +74,93 @@ function Dashboard() {
 
           {/* 🗺️ Map Section */}
           <MapView
-          destination={tripData.parsed_query?.destination}
-          activities={tripData.generated_itinerary?.days?.map(
-          (d) => `${d.morning}, ${d.afternoon}, ${d.evening}`
-          )}
-        />
-           <Timeline days={tripData.generated_itinerary?.days} />
-           <WeatherChart days={tripData.generated_itinerary?.days} />
-            <BudgetChart days={tripData.generated_itinerary?.days} />
+             destination={tripData.parsed_query?.destination}
+             activities={
+          selectedDay
+              ? [
+              tripData.generated_itinerary?.days.find((d) => d.day === selectedDay)
+              ?.morning,
+              tripData.generated_itinerary?.days.find((d) => d.day === selectedDay)
+              ?.afternoon,
+              tripData.generated_itinerary?.days.find((d) => d.day === selectedDay)
+              ?.evening,
+            ].filter(Boolean)
+          : tripData.generated_itinerary?.days.flatMap((d) => [
+          d.morning,
+          d.afternoon,
+          d.evening,
+        ])
+  }
+/>
+          <Timeline
+            days={tripData.generated_itinerary?.days}
+            selectedDay={selectedDay}
+            onDaySelect={setSelectedDay}
+          />
+
+          {/* 🟢 Reset Button */}
+          <div className="flex justify-end mb-4">
+          <button
+              onClick={() => setSelectedDay(null)}
+              className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition"
+          >
+           Show All Days
+           </button>
+          </div>
+          {/* 💰 Collapsible Budget Summary */}
+<div className="mt-8 bg-gray-50 p-6 rounded-xl shadow-inner">
+  {/* Header with toggle button */}
+  <div
+    className="flex justify-between items-center cursor-pointer"
+    onClick={() => setShowBudget(!showBudget)}
+  >
+    <h3 className="text-2xl font-bold text-green-700">
+      💵 Budget Summary
+    </h3>
+    <span
+      className={`text-green-700 text-xl transform transition-transform duration-300 ${
+        showBudget ? "rotate-180" : ""
+      }`}
+    >
+      ⬇️
+    </span>
+  </div>
+
+  {/* Animated collapsible section */}
+  <div
+    className={`transition-all duration-500 overflow-hidden ${
+      showBudget ? "max-h-[500px] opacity-100 mt-4" : "max-h-0 opacity-0"
+    }`}
+  >
+    {/* Daily breakdown */}
+    <ul className="space-y-2">
+      {tripData.generated_itinerary?.days?.map((day) => (
+        <li
+          key={day.day}
+          className="flex justify-between border-b border-gray-200 pb-1 text-gray-800"
+        >
+          <span>
+            Day {day.day}: {day.date}
+          </span>
+          <span className="font-semibold text-green-600">
+            ${day.estimated_cost}
+          </span>
+        </li>
+      ))}
+    </ul>
+
+    {/* Total budget */}
+    <p className="mt-4 text-right text-xl font-bold text-green-700">
+      Total Estimated Budget: $
+      {tripData.generated_itinerary?.total_estimated_cost}
+    </p>
+  </div>
+</div>
+
+
+          <WeatherChart days={tripData.generated_itinerary?.days} />
+           <BudgetChart days={tripData.generated_itinerary?.days} />
+
         </div>
       )}
     </div>

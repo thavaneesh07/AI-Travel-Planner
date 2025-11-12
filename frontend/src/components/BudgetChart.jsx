@@ -24,7 +24,7 @@ function BudgetChart({ days }) {
       <h3 className="text-2xl font-bold text-pink-700 mb-4 flex items-center gap-2">
         💰 Budget Breakdown by Day
       </h3>
-      <ResponsiveContainer width="100%" height={300}>
+      <ResponsiveContainer width="100%" height={400}>
         <PieChart>
           <Pie
             data={data}
