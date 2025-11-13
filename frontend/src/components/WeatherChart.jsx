@@ -14,8 +14,7 @@ function WeatherChart({ days }) {
 
   return (
     <div className="bg-white p-6 rounded-2xl shadow-md mt-8">
-      <h3 className="text-xl font-semibold text-blue-700 mb-4">🌤 Weather Forecast</h3>
-      <ResponsiveContainer width="100%" height={300}>
+      <ResponsiveContainer width="100%" height={400}>
         <LineChart data={chartData}>
           <CartesianGrid strokeDasharray="3 3" stroke="#ccc" />
           <XAxis dataKey="date" tick={{ fontSize: 12 }} />

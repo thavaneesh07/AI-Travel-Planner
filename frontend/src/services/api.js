@@ -38,3 +38,31 @@ export async function planTrip(message) {
   const res = await axios.post(`${API_BASE_URL}/plan`, { message });
   return res.data;
 }
+
+/**
+ * Get smart AI travel suggestions
+ * @param {object} tripData - Full trip data (parsed query + itinerary)
+ */
+export const getSuggestions = async (tripData) => {
+  const body = {
+    destination: tripData?.parsed_query?.destination || "",
+    budget: parseFloat(tripData?.parsed_query?.budget || 0),
+    total_estimated_cost: parseFloat(
+      tripData?.generated_itinerary?.total_estimated_cost || 0
+    ),
+    interests: tripData?.parsed_query?.interests || [],
+    weather_forecast:
+      tripData?.generated_itinerary?.days?.map(
+        (d) => d.weather?.desc || ""
+      ) || [],
+  };
+
+  const res = await fetch("http://127.0.0.1:8000/api/suggestions", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+
+  if (!res.ok) throw new Error("Failed to fetch suggestions");
+  return await res.json();
+};

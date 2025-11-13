@@ -1,37 +1,39 @@
 // src/components/Timeline.jsx
 import React from "react";
 
-function Timeline({ days = [], onDaySelect, selectedDay }) {
+function Timeline({ days = [], selectedDay, onDaySelect }) {
   if (!days || days.length === 0) return null;
 
   return (
-    <div className="mb-8">
-      <h3 className="text-2xl font-bold text-indigo-700 mb-4 flex items-center gap-2">
-        🕓 Travel Timeline
-      </h3>
-      <div className="flex overflow-x-auto gap-4 pb-2">
-        {days.map((day) => (
-          <div
-            key={day.day}
-            className={`flex-shrink-0 p-4 rounded-2xl border-2 min-w-[220px] cursor-pointer transition-all ${
-              selectedDay === day.day
-                ? "border-indigo-600 bg-indigo-50 shadow-md scale-105"
-                : "border-gray-200 bg-white hover:shadow"
-            }`}
-            onClick={() => onDaySelect?.(day.day)}
-          >
-            <p className="text-lg font-semibold text-indigo-800">
+    <div className="flex flex-col gap-4">
+      {days.map((day) => (
+        <div
+          key={day.day}
+          onClick={() => onDaySelect(day.day)}
+          className={`cursor-pointer p-4 border rounded-xl shadow-sm transition-all duration-300 ${
+            selectedDay === day.day
+              ? "bg-blue-100 border-blue-400"
+              : "bg-white hover:bg-gray-50"
+          }`}
+        >
+          <div className="flex items-center justify-between">
+            <h3 className="font-semibold text-blue-700 text-lg">
               Day {day.day} — {day.date}
+            </h3>
+            <p className="text-gray-600 text-sm">
+              💸 ${day.estimated_cost}
             </p>
-            <p className="text-gray-700">
-              ☀️ {day.weather?.temp}°C, {day.weather?.desc}
-            </p>
-            <p className="mt-1 text-gray-600">🌅 {day.morning}</p>
-            <p className="text-gray-600">🌇 {day.afternoon}</p>
-            <p className="text-gray-600">🌃 {day.evening}</p>
           </div>
-        ))}
-      </div>
+          <p className="text-sm text-gray-700 mt-1">
+            🌤 {day.weather?.temp}°C, {day.weather?.desc}
+          </p>
+          <ul className="mt-2 space-y-1 text-gray-800">
+            <li>🌅 <strong>Morning:</strong> {day.morning}</li>
+            <li>🌇 <strong>Afternoon:</strong> {day.afternoon}</li>
+            <li>🌃 <strong>Evening:</strong> {day.evening}</li>
+          </ul>
+        </div>
+      ))}
     </div>
   );
 }

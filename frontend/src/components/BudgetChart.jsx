@@ -21,9 +21,6 @@ function BudgetChart({ days }) {
 
   return (
     <div className="mt-10 bg-white rounded-2xl p-6 shadow-md border border-gray-100">
-      <h3 className="text-2xl font-bold text-pink-700 mb-4 flex items-center gap-2">
-        💰 Budget Breakdown by Day
-      </h3>
       <ResponsiveContainer width="100%" height={400}>
         <PieChart>
           <Pie
