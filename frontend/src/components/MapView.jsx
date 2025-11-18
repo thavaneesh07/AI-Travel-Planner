@@ -31,7 +31,7 @@ function FitBounds({ markers }) {
   return null;
 }
 
-function MapView({ activities = [], destination }) {
+function MapView({ activities = [], destination,hotels=[] }) {
   const [center, setCenter] = useState([48.8566, 2.3522]); // Paris default
   const [markers, setMarkers] = useState([]);
   const mapRef = useRef(null);
@@ -201,6 +201,26 @@ function MapView({ activities = [], destination }) {
             </Popup>
           </Marker>
         ))}
+        {/* 🏨 Hotel Markers */}
+{hotels.map((hotel, idx) => (
+  <Marker
+    key={`hotel-${idx}`}
+    position={[hotel.latitude, hotel.longitude]}
+    icon={new L.Icon({
+      iconUrl: "https://cdn-icons-png.flaticon.com/512/139/139899.png?raw=1", // 🏨 Hotel icon
+      iconSize: [32, 32],
+      iconAnchor: [16, 32],
+      popupAnchor: [0, -28],
+    })}
+  >
+    <Popup>
+      <strong>{hotel.name}</strong><br />
+      ⭐ {hotel.rating}<br />
+      💰 ${hotel.price_per_night}/night
+    </Popup>
+  </Marker>
+))}
+
       </MapContainer>
     </div>
   );

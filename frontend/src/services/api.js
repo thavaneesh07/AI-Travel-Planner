@@ -66,3 +66,27 @@ export const getSuggestions = async (tripData) => {
   if (!res.ok) throw new Error("Failed to fetch suggestions");
   return await res.json();
 };
+
+export async function getHotels(data) {
+  try {
+    const res = await fetch("http://localhost:8000/api/hotels", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        destination: data.parsed_query.destination,
+        budget: data.parsed_query.budget,
+        interests: data.parsed_query.interests
+      })
+    });
+
+    if (!res.ok) {
+      console.error("Hotels API failed:", res.status);
+      return { hotels: [] };
+    }
+
+    return await res.json();
+  } catch (err) {
+    console.error("HOTELS FETCH ERROR:", err);
+    return { hotels: [] };
+  }
+}

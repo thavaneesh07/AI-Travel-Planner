@@ -1,9 +1,11 @@
 // src/pages/Dashboard.jsx
 import React, { useState } from "react";
-import { planTrip, getSuggestions } from "../services/api";
+import { planTrip, getSuggestions, getHotels } from "../services/api";
 import WeatherChart from "../components/WeatherChart";
 import MapView from "../components/MapView";
 import Timeline from "../components/Timeline";
+import HotelList from "../components/HotelList";
+
 
 
 function Dashboard() {
@@ -14,34 +16,49 @@ function Dashboard() {
   const [showBudget, setShowBudget] = useState(false);
   const [suggestions, setSuggestions] = useState([]);
 const [loadingSuggestions, setLoadingSuggestions] = useState(false);
-
-
-
+  const [hotels, setHotels] = useState([]);
 
 const handlePlanTrip = async () => {
   if (!message.trim()) return;
   setLoading(true);
 
+  console.log("➡️ Starting handlePlanTrip");
+
   try {
-    // 1️⃣ Fetch trip plan
+    console.log("📌 Calling planTrip...");
     const res = await planTrip(message);
+    console.log("✅ planTrip response:", res);
+
+    console.log("📌 Calling getHotels...");
+    const hotelResponse = await getHotels(res);
+    console.log("✅ getHotels response:", hotelResponse);
+
+    res.hotels = hotelResponse.hotels;
+    setHotels(hotelResponse.hotels);
+
+    console.log("📌 Saving tripData...");
     setTripData(res);
 
-    // 2️⃣ Fetch AI suggestions only when valid data exists
     if (res?.parsed_query?.destination && res?.parsed_query?.budget) {
+      console.log("📌 Calling getSuggestions...");
       setLoadingSuggestions(true);
+
       try {
         const sug = await getSuggestions(res);
+        console.log("✅ Suggestions:", sug);
+
         setSuggestions(sug.suggestions || []);
       } catch (err) {
-        console.error("Error fetching AI suggestions:", err);
+        console.error("❌ getSuggestions ERROR:", err);
       } finally {
         setLoadingSuggestions(false);
       }
     }
+
   } catch (error) {
-    console.error("Error fetching trip data:", error);
+    console.error("❌ MAIN ERROR:", error);
   } finally {
+    console.log("✔ FINALLY → setLoading(false)");
     setLoading(false);
   }
 };
@@ -101,6 +118,7 @@ const handlePlanTrip = async () => {
                   ].filter(Boolean)
                 : tripData.generated_itinerary?.days.flatMap((d) => [d.morning, d.afternoon, d.evening])
             }
+             hotels={tripData.hotels}
           />
 
           {/* Timeline Section */}
@@ -194,33 +212,50 @@ const handlePlanTrip = async () => {
   </div>
 )}
 
+          {/* 🤖 Smart AI Suggestions */}
+<div className="mt-10 bg-gradient-to-br from-yellow-50 to-yellow-100 p-6 rounded-2xl shadow-xl border border-yellow-300">
+  <div className="flex items-center justify-between mb-4">
+    <h3 className="text-2xl font-bold text-yellow-700 flex items-center gap-2">
+      🤖 Smart AI Suggestions
+    </h3>
 
+    {/* Small "thinking" animation when loading */}
+    {loadingSuggestions && (
+      <div className="animate-pulse text-yellow-600 font-semibold">
+        Thinking...
+      </div>
+    )}
+  </div>
 
-          {/* 🌦️ Weather Chart */}
-          <div className="pt-4 border-t border-gray-200">
-
-            <WeatherChart days={tripData.generated_itinerary?.days} />
-          </div>
-          {/* 🧠 Smart AI Suggestions */}
-<div className="mt-8 bg-yellow-50 p-6 rounded-2xl shadow-inner border border-yellow-200">
-  <h3 className="text-2xl font-bold text-yellow-700 mb-4 flex items-center gap-2">
-    🤖 Smart AI Suggestions
-  </h3>
-
+  {/* Suggestions list */}
   {loadingSuggestions ? (
-    <p className="text-gray-600 italic">Generating insights...</p>
+    <p className="text-gray-600 italic">Generating personalized insights...</p>
   ) : suggestions.length > 0 ? (
-    <ul className="space-y-3 text-gray-800 list-disc list-inside">
+    <ul className="space-y-4">
       {suggestions.map((tip, idx) => (
-        <li key={idx}>{tip}</li>
+        <li
+          key={idx}
+          className="flex items-start gap-3 bg-white/80 p-3 rounded-xl shadow-sm border border-yellow-200 hover:shadow-md transition cursor-default"
+        >
+          <span className="text-xl">⭐</span>
+          <p className="text-gray-800 leading-relaxed">{tip}</p>
+        </li>
       ))}
     </ul>
   ) : (
     <p className="text-gray-600 italic">
-      No AI suggestions available yet — try re-planning your trip!
+      No AI suggestions available yet — try planning your trip again!
     </p>
   )}
 </div>
+<h2 className="text-2xl font-bold text-blue-700 mt-10">🏨 Recommended Hotels</h2>
+<HotelList hotels={hotels} />
+
+{/* 🌦️ Weather Chart */}
+          <div className="pt-4 border-t border-gray-200">
+            <h2 className="text-2xl font-bold text-blue-700 mt-10">🌦️ Weather Chart</h2>
+            <WeatherChart days={tripData.generated_itinerary?.days} />
+          </div>
 
 
         </div>
@@ -228,5 +263,6 @@ const handlePlanTrip = async () => {
     </div>
   );
 }
+
 
 export default Dashboard;

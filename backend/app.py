@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from typing import List, Optional
 import uuid
 from fastapi.middleware.cors import CORSMiddleware
-from routes import suggestions
+from routes import suggestions,hotels
 
 
 
@@ -15,6 +15,7 @@ from api.weather_service import get_weather_forecast            # <-- make sure 
 
 app = FastAPI(title="AI Travel Planner - Phase 3")
 app.include_router(suggestions.router)
+app.include_router(hotels.router)
 
 app.add_middleware(
     CORSMiddleware,
