@@ -90,3 +90,23 @@ export async function getHotels(data) {
     return { hotels: [] };
   }
 }
+
+// 🚀 Universal Chat Endpoint for ChatPanel
+export async function postChat(payload) {
+  try {
+    const res = await fetch("http://127.0.0.1:8000/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    if (!res.ok) {
+      throw new Error("Chat API failed");
+    }
+
+    return await res.json();
+  } catch (error) {
+    console.error("❌ postChat error:", error);
+    return { assistant: { text: "Server error. Try again later." } };
+  }
+}

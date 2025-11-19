@@ -6,138 +6,144 @@ import MapView from "../components/MapView";
 import Timeline from "../components/Timeline";
 import HotelList from "../components/HotelList";
 
-
+// NEW
+import ChatPanel from "../components/ChatPanel";
 
 function Dashboard() {
   const [message, setMessage] = useState("");
   const [tripData, setTripData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [selectedDay, setSelectedDay] = useState(null);
-  const [showBudget, setShowBudget] = useState(false);
   const [suggestions, setSuggestions] = useState([]);
-const [loadingSuggestions, setLoadingSuggestions] = useState(false);
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
   const [hotels, setHotels] = useState([]);
 
-const handlePlanTrip = async () => {
-  if (!message.trim()) return;
-  setLoading(true);
+  // NEW — for showing chat panel
+  const [showChat, setShowChat] = useState(true);
 
-  console.log("➡️ Starting handlePlanTrip");
+  const handlePlanTrip = async () => {
+    if (!message.trim()) return;
+    setLoading(true);
 
-  try {
-    console.log("📌 Calling planTrip...");
-    const res = await planTrip(message);
-    console.log("✅ planTrip response:", res);
+    try {
+      const res = await planTrip(message);
 
-    console.log("📌 Calling getHotels...");
-    const hotelResponse = await getHotels(res);
-    console.log("✅ getHotels response:", hotelResponse);
+      const hotelResponse = await getHotels(res);
+      res.hotels = hotelResponse.hotels;
+      setHotels(hotelResponse.hotels);
 
-    res.hotels = hotelResponse.hotels;
-    setHotels(hotelResponse.hotels);
+      setTripData(res);
 
-    console.log("📌 Saving tripData...");
-    setTripData(res);
-
-    if (res?.parsed_query?.destination && res?.parsed_query?.budget) {
-      console.log("📌 Calling getSuggestions...");
-      setLoadingSuggestions(true);
-
-      try {
-        const sug = await getSuggestions(res);
-        console.log("✅ Suggestions:", sug);
-
-        setSuggestions(sug.suggestions || []);
-      } catch (err) {
-        console.error("❌ getSuggestions ERROR:", err);
-      } finally {
-        setLoadingSuggestions(false);
+      if (res?.parsed_query?.destination && res?.parsed_query?.budget) {
+        setLoadingSuggestions(true);
+        try {
+          const sug = await getSuggestions(res);
+          setSuggestions(sug.suggestions || []);
+        } catch (err) {
+          console.error("Suggestion error:", err);
+        } finally {
+          setLoadingSuggestions(false);
+        }
       }
+    } catch (error) {
+      console.error("Main Error:", error);
+    } finally {
+      setLoading(false);
     }
-
-  } catch (error) {
-    console.error("❌ MAIN ERROR:", error);
-  } finally {
-    console.log("✔ FINALLY → setLoading(false)");
-    setLoading(false);
-  }
-};
-
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-blue-100 flex flex-col items-center p-6">
-      <h1 className="text-4xl font-bold text-blue-800 mb-6 flex items-center gap-2">
-        🌍 AI Travel Dashboard
-      </h1>
+    <div className="relative min-h-screen bg-gradient-to-b from-blue-50 to-blue-100 p-6 flex">
 
-      {/* Input Section */}
-      <div className="flex w-full max-w-3xl mb-8">
-        <input
-          type="text"
-          className="flex-1 p-3 border border-gray-300 rounded-l-lg shadow-sm focus:ring-2 focus:ring-blue-400 outline-none"
-          placeholder="e.g. Plan a solo trip to Tokyo for 5 days in Dec, budget 2000, love food and art"
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-        />
+      {/* LEFT MAIN DASHBOARD CONTENT */}
+      <div
+        className={`
+          transition-all duration-300
+          ${showChat ? "w-2/3" : "w-full"}
+          mx-auto
+        `}
+      >
+        <h1 className="text-4xl font-bold text-blue-800 mb-6 flex items-center gap-2">
+          🌍 AI Travel Dashboard
+        </h1>
+
+        {/* CHAT TOGGLE BUTTON */}
         <button
-          onClick={handlePlanTrip}
-          className="px-6 bg-blue-600 text-white font-semibold rounded-r-lg hover:bg-blue-700 transition"
+          onClick={() => setShowChat(!showChat)}
+          className="mb-4 bg-blue-600 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700 transition"
         >
-          {loading ? "Planning..." : "Plan Trip"}
+          {showChat ? "Close Chat" : "💬 Open Chat"}
         </button>
-      </div>
 
-      {/* Results Section */}
-      {tripData && (
-        <div className="bg-white shadow-lg rounded-2xl p-8 w-full max-w-4xl border border-gray-100 space-y-8">
-          {/* Parsed Trip Info */}
-          <div>
-            <h2 className="text-2xl font-bold text-purple-700 mb-4 flex items-center gap-2">
-              🌸 Parsed Trip Info
-            </h2>
-            <div className="grid grid-cols-2 gap-y-2 text-gray-800">
-              <p><strong>📍 Destination:</strong> {tripData.parsed_query?.destination}</p>
-              <p><strong>💰 Budget:</strong> ${tripData.parsed_query?.budget}</p>
-              <p><strong>🗓 Dates:</strong> {tripData.parsed_query?.start_date} → {tripData.parsed_query?.end_date}</p>
-              <p><strong>🧍 Profile:</strong> {tripData.parsed_query?.user_profile}</p>
-              <p className="col-span-2">
-                <strong>🎨 Interests:</strong> {tripData.parsed_query?.interests?.join(", ")}
-              </p>
+        {/* Input Section */}
+        <div className="flex w-full max-w-3xl mb-8">
+          <input
+            type="text"
+            className="flex-1 p-3 border border-gray-300 rounded-l-lg shadow-sm focus:ring-2 focus:ring-blue-400 outline-none"
+            placeholder="e.g. Plan a solo trip to Tokyo for 5 days in Dec, budget 2000, love food and art"
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+          />
+          <button
+            onClick={handlePlanTrip}
+            className="px-6 bg-blue-600 text-white font-semibold rounded-r-lg hover:bg-blue-700 transition"
+          >
+            {loading ? "Planning..." : "Plan Trip"}
+          </button>
+        </div>
+
+        {tripData && (
+          <div className="bg-white shadow-lg rounded-2xl p-8 w-full border border-gray-100 space-y-8">
+
+            {/* Parsed Trip Info */}
+            <div>
+              <h2 className="text-2xl font-bold text-purple-700 mb-4 flex items-center gap-2">
+                🌸 Parsed Trip Info
+              </h2>
+              <div className="grid grid-cols-2 gap-y-2 text-gray-800">
+                <p><strong>📍 Destination:</strong> {tripData.parsed_query?.destination}</p>
+                <p><strong>💰 Budget:</strong> ${tripData.parsed_query?.budget}</p>
+                <p><strong>🗓 Dates:</strong> {tripData.parsed_query?.start_date} → {tripData.parsed_query?.end_date}</p>
+                <p><strong>🧍 Profile:</strong> {tripData.parsed_query?.user_profile}</p>
+                <p className="col-span-2">
+                  <strong>🎨 Interests:</strong> {tripData.parsed_query?.interests?.join(", ")}
+                </p>
+              </div>
             </div>
-          </div>
 
-          {/* 🗺️ Map Section */}
-          <MapView
-            destination={tripData.parsed_query?.destination}
-            activities={
-              selectedDay
-                ? [
-                    tripData.generated_itinerary?.days.find((d) => d.day === selectedDay)?.morning,
-                    tripData.generated_itinerary?.days.find((d) => d.day === selectedDay)?.afternoon,
-                    tripData.generated_itinerary?.days.find((d) => d.day === selectedDay)?.evening,
-                  ].filter(Boolean)
-                : tripData.generated_itinerary?.days.flatMap((d) => [d.morning, d.afternoon, d.evening])
-            }
-             hotels={tripData.hotels}
-          />
+            {/* MAP VIEW */}
+            <MapView
+              destination={tripData.parsed_query?.destination}
+              activities={
+                selectedDay
+                  ? [
+                      tripData.generated_itinerary?.days.find((d) => d.day === selectedDay)?.morning,
+                      tripData.generated_itinerary?.days.find((d) => d.day === selectedDay)?.afternoon,
+                      tripData.generated_itinerary?.days.find((d) => d.day === selectedDay)?.evening,
+                    ].filter(Boolean)
+                  : tripData.generated_itinerary?.days.flatMap((d) => [d.morning, d.afternoon, d.evening])
+              }
+              hotels={tripData.hotels}
+            />
 
-          {/* Timeline Section */}
-          <Timeline
-            days={tripData.generated_itinerary?.days}
-            selectedDay={selectedDay}
-            onDaySelect={setSelectedDay}
-          />
+            {/* Timeline */}
+            <Timeline
+              days={tripData.generated_itinerary?.days}
+              selectedDay={selectedDay}
+              onDaySelect={setSelectedDay}
+            />
 
-          {/* 🟢 Reset Button */}
-          <div className="flex justify-end">
-            <button
-              onClick={() => setSelectedDay(null)}
-              className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition"
-            >
-              Show All Days
-            </button>
-          </div>
-          {/* 💰 Trip Budget Overview (themed in blue & purple) */}
+            {/* Show All Days */}
+            <div className="flex justify-end">
+              <button
+                onClick={() => setSelectedDay(null)}
+                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition"
+              >
+                Show All Days
+              </button>
+            </div>
+
+            {/* 💰 Trip Budget Overview (themed in blue & purple) */}
 {tripData.generated_itinerary && (
   <div className="mt-10 bg-gradient-to-br from-blue-50 to-indigo-100 p-6 rounded-2xl shadow-md border border-indigo-200">
     <h3 className="text-2xl font-bold text-indigo-700 mb-4 flex items-center gap-2">
@@ -248,21 +254,28 @@ const handlePlanTrip = async () => {
     </p>
   )}
 </div>
-<h2 className="text-2xl font-bold text-blue-700 mt-10">🏨 Recommended Hotels</h2>
-<HotelList hotels={hotels} />
 
-{/* 🌦️ Weather Chart */}
-          <div className="pt-4 border-t border-gray-200">
-            <h2 className="text-2xl font-bold text-blue-700 mt-10">🌦️ Weather Chart</h2>
-            <WeatherChart days={tripData.generated_itinerary?.days} />
+            {/* Hotels */}
+            <h2 className="text-2xl font-bold text-blue-700 mt-10">🏨 Recommended Hotels</h2>
+            <HotelList hotels={hotels} />
+
+            {/* Weather Chart */}
+            <div className="pt-4 border-t border-gray-200">
+              <h2 className="text-2xl font-bold text-blue-700 mt-10">🌦️ Weather Chart</h2>
+              <WeatherChart days={tripData.generated_itinerary?.days} />
+            </div>
           </div>
+        )}
+      </div>
 
-
+      {/* RIGHT CHAT PANEL */}
+      {showChat && (
+        <div className="w-1/3">
+          <ChatPanel />
         </div>
       )}
     </div>
   );
 }
-
 
 export default Dashboard;

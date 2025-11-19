@@ -1,120 +1,153 @@
-import React, { useState } from "react";
-import { parseMessage, generateItinerary } from "../services/api";
+import React, { useState, useRef, useEffect } from "react";
+import { postChat } from "../services/api";  // NEW unified chat endpoint
 
 function Chatbot() {
   const [message, setMessage] = useState("");
-  const [response, setResponse] = useState(null);
-  const [itinerary, setItinerary] = useState(null);
+  const [messages, setMessages] = useState([
+    { role: "assistant", text: "Hi! 👋 I'm your AI travel assistant. How can I help today?" }
+  ]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+
+  const scrollRef = useRef(null);
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [messages]);
 
   const sendMessage = async () => {
     if (!message.trim()) return;
+
+    const userMsg = { role: "user", text: message };
+    setMessages((prev) => [...prev, userMsg]);
+    setMessage("");
     setLoading(true);
-    setError(null);
 
     try {
-      // 1️⃣ Parse the user input
-      const parsed = await parseMessage(message);
-      setResponse(parsed);
+      const res = await postChat({ messages: [...messages, userMsg] });
 
-      // 2️⃣ Generate itinerary from parsed data
-      const itineraryData = await generateItinerary({
-        destination: parsed.destination,
-        start_date: parsed.start_date,
-        end_date: parsed.end_date,
-        budget: parsed.budget,
-        user_profile: parsed.user_profile,
-        interests: parsed.interests || [],
-      });
-      setItinerary(itineraryData);
-    } catch (err) {
-      console.error(err);
-      setError("Failed to connect to the backend. Please try again.");
-    } finally {
-      setLoading(false);
+      // Expected format:
+      // { assistant: { text: "...", action?: { type: "...", ... } } }
+
+      if (res?.assistant) {
+        setMessages((prev) => [...prev, { role: "assistant", text: res.assistant.text }]);
+
+        // Support actions like show_plan, etc.
+        if (res.assistant.action) {
+          setMessages((prev) => [
+            ...prev,
+            {
+              role: "system",
+              text: "🔧 ACTION TRIGGERED: " + JSON.stringify(res.assistant.action, null, 2)
+            }
+          ]);
+        }
+
+      } else {
+        setMessages((prev) => [
+          ...prev,
+          { role: "assistant", text: "Hmm, I couldn't understand that. Try again?" }
+        ]);
+      }
+
+    } catch (error) {
+      console.error(error);
+      setMessages((prev) => [
+        ...prev,
+        { role: "assistant", text: "❌ Error connecting to server. Try again later." }
+      ]);
+    }
+
+    setLoading(false);
+  };
+
+  const onKeyPress = (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      sendMessage();
     }
   };
 
   return (
-    <div style={{ padding: "20px", fontFamily: "Arial" }}>
-      <h1>Travel Chatbot 🤖</h1>
+    <div style={{ width: "70%", margin: "0 auto", padding: "20px", fontFamily: "Arial" }}>
+      <h1 style={{ textAlign: "center" }}>AI Travel Chat 🤖✈️</h1>
 
-      <input
-        type="text"
-        value={message}
-        onChange={(e) => setMessage(e.target.value)}
-        placeholder="e.g., Plan a solo trip to Paris Oct 1–7 2025, budget 1500"
+      <div
+        ref={scrollRef}
         style={{
-          width: "100%",
-          padding: "10px",
-          marginBottom: "10px",
+          height: "350px",
+          overflowY: "auto",
           border: "1px solid #ccc",
-          borderRadius: "5px",
-        }}
-      />
-      <button
-        onClick={sendMessage}
-        disabled={loading}
-        style={{
-          padding: "10px 20px",
-          background: "#007bff",
-          color: "white",
-          border: "none",
-          borderRadius: "5px",
-          cursor: "pointer",
+          padding: "10px",
+          borderRadius: "10px",
+          background: "#fafafa",
+          marginBottom: "15px"
         }}
       >
-        {loading ? "Thinking..." : "Send"}
-      </button>
-
-      {error && (
-        <p style={{ color: "red", marginTop: "10px" }}>{error}</p>
-      )}
-
-      {response && (
-        <div
-          style={{
-            marginTop: "20px",
-            border: "1px solid #ddd",
-            padding: "10px",
-            borderRadius: "5px",
-          }}
-        >
-          <h3>🧭 Parsed Trip Info</h3>
-          <p><strong>Destination:</strong> {response.destination}</p>
-          <p><strong>Dates:</strong> {response.start_date} → {response.end_date}</p>
-          <p><strong>Budget:</strong> ${response.budget}</p>
-          <p><strong>Profile:</strong> {response.user_profile}</p>
-          <p><strong>Interests:</strong> {response.interests?.join(", ")}</p>
-        </div>
-      )}
-
-      {itinerary && (
-        <div
-          style={{
-            marginTop: "20px",
-            border: "1px solid #ddd",
-            padding: "10px",
-            borderRadius: "5px",
-          }}
-        >
-          <h3>📅 Generated Itinerary</h3>
-          <p><strong>Total Estimated Cost:</strong> ${itinerary.total_estimated_cost}</p>
-          {itinerary.days.map((day) => (
-            <div key={day.day} style={{ marginTop: "10px" }}>
-              <strong>Day {day.day} ({day.date})</strong>
-              <p>🌅 Morning: {day.morning}</p>
-              <p>☀️ Afternoon: {day.afternoon}</p>
-              <p>🌙 Evening: {day.evening}</p>
-              <p>💰 Cost: ${day.estimated_cost}</p>
-              {day.weather && (
-                <p>🌦️ Weather: {day.weather.temp}°C, {day.weather.desc}</p>
-              )}
+        {messages.map((m, idx) => (
+          <div
+            key={idx}
+            style={{
+              marginBottom: "12px",
+              textAlign: m.role === "user" ? "right" : "left"
+            }}
+          >
+            <div
+              style={{
+                display: "inline-block",
+                background: m.role === "user" ? "#007bff" : "#eaeaea",
+                color: m.role === "user" ? "white" : "black",
+                padding: "10px 14px",
+                borderRadius: "10px",
+                maxWidth: "70%",
+                whiteSpace: "pre-wrap",
+              }}
+            >
+              {m.text}
             </div>
-          ))}
-        </div>
-      )}
+          </div>
+        ))}
+
+        {loading && (
+          <div style={{ textAlign: "left", fontStyle: "italic", color: "gray" }}>
+            Assistant is typing...
+          </div>
+        )}
+      </div>
+
+      <div style={{ display: "flex", gap: "10px" }}>
+        <textarea
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          onKeyDown={onKeyPress}
+          placeholder="Ask me anything — e.g., 'Plan a 5-day Tokyo trip, budget 2000'"
+          style={{
+            flex: 1,
+            padding: "10px",
+            borderRadius: "8px",
+            border: "1px solid #ccc",
+            resize: "none",
+            height: "60px"
+          }}
+        />
+
+        <button
+          onClick={sendMessage}
+          disabled={loading}
+          style={{
+            padding: "0 20px",
+            background: "#007bff",
+            color: "white",
+            borderRadius: "8px",
+            border: "none",
+            cursor: "pointer",
+            height: "60px"
+          }}
+        >
+          {loading ? "..." : "Send"}
+        </button>
+      </div>
     </div>
   );
 }
