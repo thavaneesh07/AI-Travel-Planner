@@ -1,21 +1,25 @@
+from dotenv import load_dotenv
+load_dotenv()
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from typing import List, Optional
 import uuid
 from fastapi.middleware.cors import CORSMiddleware
-from routes import suggestions,hotels
-
-
-
+from routes import suggestions,hotels,chat
+from routes.itinerary import router as itinerary_router
 
 # ✅ Import local modules
 from nlp.nlp_parser import parse_user_query
-from itinerary.itinerary_generator import generate_itinerary   # <-- make sure file is inside backend/itinerary/
+from itinerary.itinerary_generator import generate_itinerary
 from api.weather_service import get_weather_forecast            # <-- make sure file is inside backend/api/
 
 app = FastAPI(title="AI Travel Planner - Phase 3")
 app.include_router(suggestions.router)
 app.include_router(hotels.router)
+app.include_router(chat.router)
+app.include_router(itinerary_router, prefix="/api")
+
+
 
 app.add_middleware(
     CORSMiddleware,
@@ -47,20 +51,6 @@ def parse(req: ParseReq):
     if not result:
         raise HTTPException(status_code=422, detail="Could not extract data from message")
     return result
-
-
-# --- 2️⃣ Create Itinerary ---
-@app.post("/api/itineraries")
-def create_itinerary(req: ItinCreateReq):
-    """Generate a dynamic day-by-day itinerary using AI logic."""
-    itinerary = generate_itinerary(
-        destination=req.destination,
-        start_date=req.start_date,
-        end_date=req.end_date,
-        budget=req.budget,
-        interests=req.interests
-    )
-    return itinerary
 
 
 # --- 3️⃣ Combined Planner (NLP + Itinerary) ---

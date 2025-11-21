@@ -1,134 +1,190 @@
-import random
+from typing import List, Dict, Any
+from api.groq_service import generate_activity_types
+from api.osm_service import geocode, search_pois, placeholder_place
+from state import get_trip, set_trip
 from datetime import datetime, timedelta
-from api.weather_service import get_weather_forecast
+import requests
 
-# --- Sample activity pools by interest ---
-ACTIVITIES = {
-    "food": [
-        "Local food market tour",
-        "French pastry baking class",
-        "Street food crawl at night markets",
-        "Dinner at a riverside restaurant",
-        "Visit a local café for brunch"
-    ],
-    "history": [
-        "Visit local museums",
-        "Guided historical walking tour",
-        "Explore old town architecture",
-        "Visit ancient landmarks",
-        "Tour famous historical monuments"
-    ],
-    "art": [
-        "Art gallery hopping",
-        "Montmartre art walk",
-        "Street art tour",
-        "Visit the Louvre Museum",
-        "Sketching session at a scenic spot"
-    ],
-    "adventure": [
-        "Morning hike or cycling trail",
-        "Kayaking on a nearby river",
-        "Hot air balloon ride",
-        "Scenic countryside exploration"
-    ],
-    "shopping": [
-        "Local street shopping",
-        "Visit vintage stores",
-        "Explore weekend flea markets",
-        "Shop at a local artisan market"
-    ],
-    "beaches": [
-        "Morning beach walk",
-        "Snorkeling session",
-        "Sunset at the beach bar",
-        "Beach volleyball with locals"
-    ],
-    "culture": [
-        "Attend a local cultural event",
-        "Traditional cooking experience",
-        "Watch a folk performance",
-        "Learn a local dance"
-    ],
-    "nightlife": [
-        "Pub crawl across downtown",
-        "Night walk with scenic views",
-        "Attend a music festival",
-        "Visit rooftop bars"
-    ],
+# Map activity labels → category hints for OSM
+_ACTIVITY_TO_HINTS = {
+    "museum": ["museum"],
+    "art_museum": ["museum", "art"],
+    "historic_site": ["historic", "monument"],
+    "temple": ["temple", "religion"],
+    "church": ["church", "religion"],
+    "park": ["park", "leisure"],
+    "beach": ["beach"],
+    "food_experience": ["restaurant", "food", "market"],
+    "local_market": ["marketplace", "market"],
+    "sightseeing": ["attraction", "viewpoint"],
+    "shopping": ["shop"],
+    "architecture": ["architecture", "building"],
+    "local_dinner": ["restaurant"],
 }
 
-DEFAULT_ACTIVITIES = [
-    "Visit a popular attraction",
-    "Try local street food and cafés",
-    "Explore scenic spots and viewpoints",
-    "Attend a walking city tour"
-]
+def _map_activity_to_hints(label: str) -> List[str]:
+    if not label:
+        return ["attraction"]
+    return _ACTIVITY_TO_HINTS.get(label.lower(), [label.lower()])
 
 
-def generate_itinerary(destination, start_date, end_date, budget, interests):
+# -----------------------------------------------------
+# WEATHER API INTEGRATION
+# -----------------------------------------------------
+def fetch_weather(lat: float, lon: float, date: str):
     """
-    Generate a realistic, day-wise itinerary including weather forecast and varied activities.
+    Fetch simple weather forecast using Open-Meteo (free, no API key needed).
+    date format: YYYY-MM-DD
     """
-    # Convert dates to datetime objects
-    start = datetime.strptime(start_date, "%Y-%m-%d")
-    end = datetime.strptime(end_date, "%Y-%m-%d")
-    total_days = (end - start).days + 1
+    try:
+        url = (
+            "https://api.open-meteo.com/v1/forecast?"
+            f"latitude={lat}&longitude={lon}&hourly=temperature_2m,weathercode"
+            f"&start_date={date}&end_date={date}"
+        )
+        r = requests.get(url, timeout=10)
+        data = r.json()
 
-    # Fetch weather forecast for the destination
-    weather_data = get_weather_forecast(destination)
+        if "hourly" not in data:
+            return None
 
-    # Build activity pool from interests
-    all_activities = []
-    for interest in interests:
-        all_activities.extend(ACTIVITIES.get(interest.lower(), []))
+        # Pick midday reading (12:00)
+        hourly = data["hourly"]
+        times = hourly["time"]
+        temps = hourly["temperature_2m"]
+        codes = hourly["weathercode"]
 
-    if not all_activities:
-        all_activities = DEFAULT_ACTIVITIES
+        if "12:00" in times[0]:
+            idx = 0
+        else:
+            # safest fallback: just pick index 12
+            idx = min(12, len(times) - 1)
 
-    itinerary = []
-    daily_budget = budget / total_days if budget else 150
+        return {
+            "temperature": temps[idx],
+            "weathercode": codes[idx],
+        }
+    except Exception:
+        return None
 
-    used_activities = set()  # prevent exact repetition
 
-    for i in range(total_days):
-        date_str = (start + timedelta(days=i)).strftime("%Y-%m-%d")
+# -----------------------------------------------------
+# MAIN ITINERARY GENERATOR
+# -----------------------------------------------------
+def generate_itinerary(
+    destination: str,
+    start_date: str,
+    end_date: str,
+    interests: List[str],
+    budget: float,
+) -> Dict[str, Any]:
 
-        # Pick 3 unique random activities for the day
-        daily_choices = random.sample(all_activities, k=min(3, len(all_activities)))
+    # 1) Ask Groq for activity plan
+    activity_plan = generate_activity_types(destination, start_date, end_date, interests, budget)
 
-        # Calculate day cost with slight variance
-        estimated_cost = round(daily_budget * random.uniform(0.9, 1.2), 2)
+    # Calculate days count
+    try:
+        sd = datetime.fromisoformat(start_date).date()
+        ed = datetime.fromisoformat(end_date).date()
+        days_expected = (ed - sd).days + 1
+    except:
+        days_expected = len(activity_plan) if activity_plan else 3
 
-        # Attach weather (fallback to mock if date missing)
-        weather = weather_data.get(date_str, {"temp": random.randint(15, 28), "desc": "clear sky"})
+    # 2) Geocode destination
+    try:
+        center = geocode(destination)
+        lat = float(center["lat"])
+        lon = float(center["lon"])
+    except Exception:
+        lat = None
+        lon = None
 
-        itinerary.append({
-            "day": i + 1,
-            "date": date_str,
-            "morning": daily_choices[0],
-            "afternoon": daily_choices[1] if len(daily_choices) > 1 else random.choice(all_activities),
-            "evening": daily_choices[2] if len(daily_choices) > 2 else random.choice(all_activities),
-            "estimated_cost": estimated_cost,
-            "weather": weather
-        })
+    # -------------------------------------------------
+    # Budget estimation
+    # -------------------------------------------------
+    # Simple heuristic:
+    # morning = ₹700, afternoon = ₹1000, evening = ₹1300 (avg spend)
+    COST_MAP = {"morning": 700, "afternoon": 1000, "evening": 1300}
+    total_estimated_budget = 0
 
-    total_cost = sum(d["estimated_cost"] for d in itinerary)
+    days_out = []
+    cur_date = sd
 
+    for idx, day_obj in enumerate(activity_plan[:days_expected]):
+        dnum = int(day_obj.get("day", idx + 1))
+        day_entry = {"day": dnum, "date": cur_date.isoformat(), "morning": None, "afternoon": None, "evening": None}
+
+        # ---------------------------
+        # Weather for the day
+        # ---------------------------
+        if lat is not None and lon is not None:
+            weather = fetch_weather(lat, lon, cur_date.isoformat())
+        else:
+            weather = None
+
+        day_entry["weather"] = weather
+
+        # ---------------------------
+        # Fill activity slots
+        # ---------------------------
+        for slot in ("morning", "afternoon", "evening"):
+
+            activity_label = day_obj.get(slot) or "sightseeing"
+            hints = _map_activity_to_hints(activity_label)
+
+            # radius based on budget
+            radius = max(1000, min(10000, int((budget or 1000) / 2)))
+
+            place = None
+            if lat is not None and lon is not None:
+                candidates = search_pois(lat=lat, lon=lon, kinds=hints, radius=radius, limit=6)
+                if candidates:
+                    c = candidates[0]
+                    place = {
+                        "name": c.get("name"),
+                        "lat": c.get("lat"),
+                        "lon": c.get("lon"),
+                        "tags": c.get("tags", {}),
+                        "activity_label": activity_label,
+                    }
+
+            # fallback
+            if not place:
+                ph = placeholder_place(activity_label, destination)
+                place = {
+                    "name": ph["name"],
+                    "lat": ph.get("lat"),
+                    "lon": ph.get("lon"),
+                    "tags": ph.get("tags", {}),
+                    "activity_label": activity_label,
+                }
+
+            day_entry[slot] = place
+            total_estimated_budget += COST_MAP.get(slot, 800)
+
+        days_out.append(day_entry)
+        cur_date = cur_date + timedelta(days=1)
+
+    # -------------------------------------------------
+    # Save in global backend state
+    # -------------------------------------------------
+    trip = get_trip()
+    trip["destination"] = destination
+    trip["start_date"] = start_date
+    trip["end_date"] = end_date
+    trip["itinerary"] = days_out
+    trip["interests"] = interests or []
+    trip["budget"] = budget or trip.get("budget", 1000.0)
+    trip["total_estimated_budget"] = total_estimated_budget
+    set_trip(trip)
+
+    # -------------------------------------------------
+    # FINAL RESPONSE
+    # -------------------------------------------------
     return {
         "destination": destination,
-        "total_estimated_cost": round(total_cost, 2),
-        "days": itinerary
+        "start_date": start_date,
+        "end_date": end_date,
+        "days": days_out,
+        "total_estimated_budget": total_estimated_budget,
     }
-
-
-# --- Local testing ---
-if __name__ == "__main__":
-    sample = generate_itinerary(
-        destination="Paris",
-        start_date="2025-10-31",
-        end_date="2025-11-04",
-        budget=1500,
-        interests=["food", "art"]
-    )
-    import json
-    print(json.dumps(sample, indent=2))

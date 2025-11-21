@@ -115,14 +115,19 @@ function Dashboard() {
             <MapView
               destination={tripData.parsed_query?.destination}
               activities={
-                selectedDay
-                  ? [
-                      tripData.generated_itinerary?.days.find((d) => d.day === selectedDay)?.morning,
-                      tripData.generated_itinerary?.days.find((d) => d.day === selectedDay)?.afternoon,
-                      tripData.generated_itinerary?.days.find((d) => d.day === selectedDay)?.evening,
-                    ].filter(Boolean)
-                  : tripData.generated_itinerary?.days.flatMap((d) => [d.morning, d.afternoon, d.evening])
-              }
+  selectedDay
+    ? [
+        tripData.generated_itinerary?.days.find((d) => d.day === selectedDay)?.morning?.name,
+        tripData.generated_itinerary?.days.find((d) => d.day === selectedDay)?.afternoon?.name,
+        tripData.generated_itinerary?.days.find((d) => d.day === selectedDay)?.evening?.name,
+      ].filter(Boolean)
+    : tripData.generated_itinerary?.days.flatMap((d) => [
+        d.morning?.name,
+        d.afternoon?.name,
+        d.evening?.name
+      ]).filter(Boolean)
+}
+
               hotels={tripData.hotels}
             />
 

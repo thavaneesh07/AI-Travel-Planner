@@ -28,9 +28,16 @@ function Timeline({ days = [], selectedDay, onDaySelect }) {
             🌤 {day.weather?.temp}°C, {day.weather?.desc}
           </p>
           <ul className="mt-2 space-y-1 text-gray-800">
-            <li>🌅 <strong>Morning:</strong> {day.morning}</li>
-            <li>🌇 <strong>Afternoon:</strong> {day.afternoon}</li>
-            <li>🌃 <strong>Evening:</strong> {day.evening}</li>
+          <li>
+  🌅 <strong>Morning:</strong> {day.morning?.name ?? day.morning}
+</li>
+<li>
+  🌇 <strong>Afternoon:</strong> {day.afternoon?.name ?? day.afternoon}
+</li>
+<li>
+  🌃 <strong>Evening:</strong> {day.evening?.name ?? day.evening}
+</li>
+
           </ul>
         </div>
       ))}
