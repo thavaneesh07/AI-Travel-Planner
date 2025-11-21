@@ -12,7 +12,7 @@ class HotelRequest(BaseModel):
     budget: float
     interests: list = []
 
-@router.post("/api/hotels")
+@router.post("/hotels")
 async def get_hotels(request: HotelRequest):
     dest = request.destination
 

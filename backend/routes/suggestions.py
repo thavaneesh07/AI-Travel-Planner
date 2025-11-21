@@ -15,7 +15,7 @@ class SuggestionRequest(BaseModel):
     weather_forecast: Optional[List[str]] = []
 
 
-@router.post("/api/suggestions")
+@router.post("/suggestions")
 async def get_suggestions(request: SuggestionRequest):
     print("🪄 Incoming request:", request.model_dump())
     try:

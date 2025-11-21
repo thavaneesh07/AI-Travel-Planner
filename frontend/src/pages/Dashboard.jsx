@@ -117,17 +117,16 @@ function Dashboard() {
               activities={
   selectedDay
     ? [
-        tripData.generated_itinerary?.days.find((d) => d.day === selectedDay)?.morning?.name,
-        tripData.generated_itinerary?.days.find((d) => d.day === selectedDay)?.afternoon?.name,
-        tripData.generated_itinerary?.days.find((d) => d.day === selectedDay)?.evening?.name,
+        tripData.generated_itinerary?.days.find((d) => d.day === selectedDay)?.morning,
+        tripData.generated_itinerary?.days.find((d) => d.day === selectedDay)?.afternoon,
+        tripData.generated_itinerary?.days.find((d) => d.day === selectedDay)?.evening,
       ].filter(Boolean)
     : tripData.generated_itinerary?.days.flatMap((d) => [
-        d.morning?.name,
-        d.afternoon?.name,
-        d.evening?.name
+        d.morning,
+        d.afternoon,
+        d.evening
       ]).filter(Boolean)
 }
-
               hotels={tripData.hotels}
             />
 

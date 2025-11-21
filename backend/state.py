@@ -1,17 +1,17 @@
 # backend/state.py
-
-_trip_state = {
+"""
+Tiny in-memory single-user state used by itinerary generator while developing.
+You can replace with a DB or file-based persistence later.
+"""
+_state = {
+    "itinerary": None,
+    "budget": None,
     "destination": None,
-    "start_date": None,
-    "end_date": None,
-    "itinerary": [],
-    "interests": [],
-    "budget": 1000.0,
 }
 
 def get_trip():
-    return _trip_state
+    return _state
 
-def set_trip(data):
-    global _trip_state
-    _trip_state.update(data)
+def set_trip(trip: dict):
+    _state.update(trip)
+    return _state

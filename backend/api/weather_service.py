@@ -1,44 +1,66 @@
+# backend/api/weather_service.py
 import requests
 from datetime import datetime, timedelta
-import os
+from typing import List, Dict, Any, Optional
 
-API_KEY = "d31c336374b603dce7c5c7b7543c33d8"  
+OPEN_METEO_URL = "https://api.open-meteo.com/v1/forecast"
+NOMINATIM_URL = "https://nominatim.openstreetmap.org/search"
+HEADERS = {"User-Agent": "AI-Travel-Planner/1.0 (your-email@example.com)"}
 
-def get_weather_forecast(city: str):
+def geocode_city(city: str) -> Dict[str, Any]:
+    params = {"format": "json", "q": city, "limit": 1}
+    r = requests.get(NOMINATIM_URL, params=params, headers=HEADERS, timeout=8)
+    r.raise_for_status()
+    data = r.json()
+    if not data:
+        raise ValueError("No geocode result")
+    return data[0]
+
+
+def get_weather_forecast(city: str, start_date: Optional[str] = None, end_date: Optional[str] = None) -> List[Dict[str, Any]]:
     """
-    Fetch 5-day weather forecast using OpenWeatherMap API.
-    Falls back to mock data if API fails.
+    Returns daily weather information for the date range (inclusive).
+    Output: list of dicts for each day, with keys: time, temp_max, temp_min, weathercode
+    If start/end omitted, returns 3-day forecast starting today.
     """
-    try:
-        url = f"https://api.openweathermap.org/data/2.5/forecast?q={city}&appid={API_KEY}&units=metric"
-        res = requests.get(url)
-        data = res.json()
+    # geocode
+    geo = geocode_city(city)
+    lat = float(geo["lat"])
+    lon = float(geo["lon"])
 
-        if "list" not in data:
-            raise ValueError("Invalid API response")
+    if start_date:
+        start = datetime.fromisoformat(start_date).date()
+    else:
+        start = datetime.utcnow().date()
+    if end_date:
+        end = datetime.fromisoformat(end_date).date()
+    else:
+        end = start + timedelta(days=2)
 
-        forecast = {}
-        today = datetime.today()
+    # Open-Meteo expects ISO dates
+    params = {
+        "latitude": lat,
+        "longitude": lon,
+        "daily": "temperature_2m_max,temperature_2m_min,weathercode",
+        "timezone": "auto",
+        "start_date": start.isoformat(),
+        "end_date": end.isoformat(),
+    }
+    r = requests.get(OPEN_METEO_URL, params=params, timeout=10)
+    r.raise_for_status()
+    data = r.json()
+    daily = data.get("daily", {})
+    times = daily.get("time", [])
+    tmax = daily.get("temperature_2m_max", [])
+    tmin = daily.get("temperature_2m_min", [])
+    wc = daily.get("weathercode", [])
 
-        # Extract next 5 days (averaging every 24 hours)
-        for i in range(5):
-            date_str = (today + timedelta(days=i)).strftime("%Y-%m-%d")
-            entry = data["list"][i * 8]  # every ~8 entries = 24h
-            forecast[date_str] = {
-                "temp": round(entry["main"]["temp"]),
-                "desc": entry["weather"][0]["description"]
-            }
-
-        return {"city": city, "forecast": forecast}
-
-    except Exception as e:
-        print(f"⚠️ Weather API failed ({e}) — using mock data.")
-        mock_forecast = {}
-        today = datetime.today()
-        for i in range(5):
-            date_str = (today + timedelta(days=i)).strftime("%Y-%m-%d")
-            mock_forecast[date_str] = {
-                "temp": 25 + i % 3,
-                "desc": ["sunny", "clear sky", "partly cloudy", "light rain", "clear sky"][i % 5]
-            }
-        return {"city": city, "forecast": mock_forecast}
+    out = []
+    for i, day in enumerate(times):
+        out.append({
+            "time": day,
+            "temp_max": tmax[i] if i < len(tmax) else None,
+            "temp_min": tmin[i] if i < len(tmin) else None,
+            "weathercode": wc[i] if i < len(wc) else None,
+        })
+    return out

@@ -13,7 +13,7 @@ HEADERS = {"Content-Type": "application/json"}
 if GROQ_API_KEY:
     HEADERS["Authorization"] = f"Bearer {GROQ_API_KEY}"
 
-# Fallback deterministic planner
+
 def _fallback_plan(days: int, interests: List[str]) -> List[Dict[str, Any]]:
     days = max(1, days)
     plan = []
@@ -25,20 +25,15 @@ def _fallback_plan(days: int, interests: List[str]) -> List[Dict[str, Any]]:
     return plan
 
 
-def _parse_model_output(text: str) -> List[Dict[str, Any]]:
-    """
-    Attempts to parse JSON from model output. Strips code fences if present.
-    Returns list of day dicts on success, otherwise raises ValueError.
-    """
-    txt = text.strip()
+def _parse_model_output(text: str) -> Any:
+    txt = (text or "").strip()
+    if not txt:
+        raise ValueError("Empty model output")
     if txt.startswith("```"):
-        # remove fencing
-        # find first newline after opening ```
         idx = txt.find("\n")
         if idx != -1:
             txt = txt[idx + 1 :]
         txt = txt.rstrip("`").strip()
-    # try JSON load
     return json.loads(txt)
 
 
@@ -49,12 +44,7 @@ def generate_activity_types(
     interests: List[str],
     budget: float,
 ) -> List[Dict[str, Any]]:
-    """
-    Produces activity-level labels (morning/afternoon/evening) per day via Groq model.
-    If Groq is not configured or call fails, falls back to deterministic planner.
-    """
 
-    # compute days
     try:
         sd = date.fromisoformat(start_date)
         ed = date.fromisoformat(end_date)
@@ -64,11 +54,9 @@ def generate_activity_types(
     except Exception:
         days = 3
 
-    # If no GROQ key, fallback
     if not GROQ_API_KEY:
         return _fallback_plan(days, interests)
 
-    # Build a compact instruction asking for JSON array only
     system_instructions = (
         "You are a travel plan generator. Output JSON only. "
         "Return a JSON array of objects, one per day. Each object must have keys: "
@@ -96,18 +84,12 @@ def generate_activity_types(
         resp = requests.post(url, headers=HEADERS, json=payload, timeout=30)
         resp.raise_for_status()
         body = resp.json()
-        # model output location may differ per Groq API; try common shapes:
-        # - body["outputs"][0]["content"]
-        # - body["generations"][0]["text"]
         text = None
         if "outputs" in body and isinstance(body["outputs"], list) and len(body["outputs"]) > 0:
-            # try to concatenate content entries if present
             out = body["outputs"][0]
             if isinstance(out, dict) and "content" in out:
-                # sometimes content can be list of dicts with text
                 content = out["content"]
                 if isinstance(content, list):
-                    # find first text block
                     for c in content:
                         if isinstance(c, dict) and "text" in c:
                             text = c["text"]
@@ -115,19 +97,105 @@ def generate_activity_types(
                 elif isinstance(content, str):
                     text = content
         if not text:
-            # try alternative keys
             if "generations" in body and isinstance(body["generations"], list) and len(body["generations"]) > 0:
                 gen = body["generations"][0]
                 text = gen.get("text") or gen.get("content") or None
         if not text and isinstance(body, dict):
-            # fallback: stringify any 'output' field
             text = json.dumps(body)
-        # parse JSON from text
+
         parsed = _parse_model_output(text)
         if isinstance(parsed, list):
             return parsed
         else:
             return _fallback_plan(days, interests)
     except Exception:
-        # any failure -> deterministic fallback
         return _fallback_plan(days, interests)
+
+
+def refine_itinerary_json(refine_input: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """
+    Accept a refine_input dict (see itinerary_generator) and return
+    a list of polished day objects: {day, date, morning, afternoon, evening, notes}
+    """
+    # fallback if no API key
+    if not GROQ_API_KEY:
+        return [
+            {
+                "day": d.get("day"),
+                "date": d.get("date"),
+                "morning": d.get("morning"),
+                "afternoon": d.get("afternoon"),
+                "evening": d.get("evening"),
+                "notes": ""
+            }
+            for d in refine_input.get("raw_days", [])
+        ]
+
+    system_instructions = (
+        "You are an itinerary polishing assistant. Output JSON only. "
+        "Given a list of days with raw place names, return a JSON array of objects. "
+        "Each object must have keys: day (int), date (YYYY-MM-DD), morning (short blurb, max 45 words), "
+        "afternoon (short blurb), evening (short blurb), notes (short tips). Do not output any extra text."
+    )
+
+    body_snippet = {
+        "destination": refine_input.get("destination"),
+        "start_date": refine_input.get("start_date"),
+        "end_date": refine_input.get("end_date"),
+        "budget": refine_input.get("budget"),
+        "interests": refine_input.get("interests"),
+        "raw_days": refine_input.get("raw_days", []),
+    }
+
+    user_prompt = f"Refine this itinerary:\n\n{json.dumps(body_snippet, ensure_ascii=False)}\n\nReturn JSON array only."
+
+    payload = {
+        "input": f"{system_instructions}\n\n{user_prompt}",
+        "max_output_tokens": 1200,
+        "temperature": 0.25,
+    }
+
+    url = f"{GROQ_API_URL}/models/{GROQ_MODEL}/generate"
+
+    try:
+        resp = requests.post(url, headers=HEADERS, json=payload, timeout=45)
+        resp.raise_for_status()
+        body = resp.json()
+
+        text = None
+        if "outputs" in body and isinstance(body["outputs"], list) and len(body["outputs"]) > 0:
+            out = body["outputs"][0]
+            if isinstance(out, dict) and "content" in out:
+                content = out["content"]
+                if isinstance(content, list):
+                    for c in content:
+                        if isinstance(c, dict) and "text" in c:
+                            text = c["text"]
+                            break
+                elif isinstance(content, str):
+                    text = content
+        if not text:
+            if "generations" in body and isinstance(body["generations"], list) and len(body["generations"]) > 0:
+                gen = body["generations"][0]
+                text = gen.get("text") or gen.get("content") or None
+        if not text and isinstance(body, dict):
+            text = json.dumps(body)
+
+        parsed = _parse_model_output(text)
+        if isinstance(parsed, list):
+            return parsed
+        else:
+            raise ValueError("Refinement returned non-list")
+    except Exception:
+        # fallback structured output
+        return [
+            {
+                "day": d.get("day"),
+                "date": d.get("date"),
+                "morning": d.get("morning"),
+                "afternoon": d.get("afternoon"),
+                "evening": d.get("evening"),
+                "notes": ""
+            }
+            for d in refine_input.get("raw_days", [])
+        ]
