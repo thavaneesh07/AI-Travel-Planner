@@ -3,7 +3,11 @@ import requests
 import time
 from typing import List, Dict, Any, Optional
 
-OVERPASS_URL = "https://overpass-api.de/api/interpreter"
+OVERPASS_URLS = [
+    "https://overpass.kumi.systems/api/interpreter",
+    "https://overpass-api.de/api/interpreter",
+    "https://overpass.openstreetmap.fr/api/interpreter"
+]
 NOMINATIM_URL = "https://nominatim.openstreetmap.org/search"
 
 # Map short hint -> (osm_key, osm_value or None).
@@ -92,12 +96,7 @@ def _hints_to_filters(hints: List[str]) -> List[Dict[str, Optional[str]]]:
     return out
 
 
-def search_pois(lat: float, lon: float, kinds: List[str], radius: int = 3000, limit: int = 20) -> List[Dict[str, Any]]:
-    """
-    Search OSM (Overpass) for POIs around lat/lon.
-    `kinds` is a list of friendly hints (e.g. ["museum","tourism","viewpoint"])
-    Returns list of dicts: {name, lat, lon, tags}
-    """
+def search_pois(lat: float, lon: float, kinds: List[str], radius: int = 8000, limit: int = 20) -> List[Dict[str, Any]]:
     if lat is None or lon is None:
         return []
 
@@ -106,42 +105,66 @@ def search_pois(lat: float, lon: float, kinds: List[str], radius: int = 3000, li
         return []
 
     query = _build_overpass_query(lat, lon, radius, filters, limit=limit)
-    try:
-        r = requests.post(OVERPASS_URL, data=query.encode("utf-8"), headers=HEADERS, timeout=25)
-        r.raise_for_status()
-        res = r.json()
-    except Exception:
-        # on any failure, return empty to force fallback
+
+    # Try each Overpass server until one works
+    res = None
+    for url in OVERPASS_URLS:
+        try:
+            time.sleep(1)  # polite
+            r = requests.post(url, data=query, headers=HEADERS, timeout=30)
+            r.raise_for_status()
+            res = r.json()
+
+            # If this server returned valid data
+            if "elements" in res and len(res["elements"]) > 0:
+                break
+
+        except Exception:
+            continue
+
+    # All servers failed or returned empty
+    if not res or "elements" not in res:
         return []
 
-    elements = res.get("elements", [])
+    elements = res["elements"]
     pois = []
+
     for el in elements:
-        name = None
         tags = el.get("tags") or {}
-        # prefer 'name' tag
-        name = tags.get("name") or tags.get("official_name") or tags.get("wikidata") or tags.get("tourism") or None
-        # compute lat/lon: node has lat/lon, way/relation often have 'center'
-        if el.get("type") == "node":
-            plat = el.get("lat")
-            plon = el.get("lon")
+
+        name = (
+            tags.get("name")
+            or tags.get("official_name")
+            or tags.get("wikidata")
+            or tags.get("tourism")
+        )
+
+        if el["type"] == "node":
+            plat, plon = el.get("lat"), el.get("lon")
         else:
             center = el.get("center") or {}
-            plat = center.get("lat")
-            plon = center.get("lon")
+            plat, plon = center.get("lat"), center.get("lon")
+
         if not name:
-            # if no name, try to build from tags (small fallback)
-            name = tags.get("amenity") or tags.get("tourism") or tags.get("historic") or None
+            name = tags.get("amenity") or tags.get("historic") or None
+
         if name and plat and plon:
-            pois.append({"name": name, "lat": float(plat), "lon": float(plon), "tags": tags})
-    # Simple dedupe by name + coords
-    seen = set()
+            pois.append({
+                "name": name,
+                "lat": float(plat),
+                "lon": float(plon),
+                "tags": tags
+            })
+
+    # Dedupe
     unique = []
+    seen = set()
     for p in pois:
-        key = (p["name"], round(p["lat"], 5), round(p["lon"], 5))
+        key = (p["name"].lower(), round(p["lat"], 4), round(p["lon"], 4))
         if key not in seen:
             seen.add(key)
             unique.append(p)
+
     return unique[:limit]
 
 

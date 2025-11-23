@@ -25,8 +25,8 @@ _ACTIVITY_TO_HINTS = {
     "local_dinner": ["restaurant", "cafe", "amenity"],
 }
 
-# Simple per-slot cost estimate (USD)
-COST_MAP = {"morning": 25.0, "afternoon": 35.0, "evening": 45.0}
+# Simple per-slot weight (used to split each day's budget) - replaces fixed COST_MAP usage
+_SLOT_WEIGHTS = {"morning": 0.25, "afternoon": 0.35, "evening": 0.40}
 
 
 def _map_activity_to_hints(label: Optional[str]) -> List[str]:
@@ -43,6 +43,7 @@ def _normalize_weather(raw: Any, start_date: datetime.date, days_count: int) -> 
       - list of dicts (already normalized)
       - dict with 'daily' Open-Meteo style
       - None or unexpected -> return list of placeholders
+    This version improves mapping of weather codes and temp extraction.
     """
     out = []
     # default placeholder
@@ -53,12 +54,47 @@ def _normalize_weather(raw: Any, start_date: datetime.date, days_count: int) -> 
     if not raw:
         return out
 
+    # map weather codes -> text
+    code_map = {
+        0: "Clear sky",
+        1: "Mainly clear",
+        2: "Partly cloudy",
+        3: "Overcast",
+        45: "Fog",
+        48: "Fog",
+        51: "Light drizzle",
+        61: "Rain",
+        63: "Rain",
+        71: "Snow",
+        80: "Rain showers",
+        95: "Thunderstorm",
+    }
+
     # If already a list of day dicts
     if isinstance(raw, list):
         for i in range(min(days_count, len(raw))):
             r = raw[i] or {}
-            out[i]["temp"] = r.get("temp") or r.get("temperature") or r.get("temp_max") or r.get("temp_avg")
-            out[i]["desc"] = r.get("desc") or r.get("description") or r.get("weather") or out[i]["desc"]
+            # prefer temp_max then temp_avg then temp
+            tmax = r.get("temp_max") or r.get("temperature_max") or r.get("temp") or r.get("temperature")
+            tmin = r.get("temp_min") or r.get("temperature_min")
+            temp_val = None
+            if tmax is not None and tmin is not None:
+                try:
+                    temp_val = (float(tmax) + float(tmin)) / 2.0
+                except Exception:
+                    temp_val = tmax
+            else:
+                temp_val = tmax
+            out[i]["temp"] = temp_val
+            # description: check weathercode then description fields
+            wc = r.get("weathercode") or r.get("weather_code") or r.get("code")
+            if wc is not None:
+                try:
+                    out[i]["desc"] = code_map.get(int(wc), out[i]["desc"])
+                except Exception:
+                    out[i]["desc"] = out[i]["desc"]
+            else:
+                out[i]["desc"] = r.get("desc") or r.get("description") or r.get("weather") or out[i]["desc"]
         return out
 
     # If Open-Meteo style dict with daily.* arrays
@@ -68,37 +104,23 @@ def _normalize_weather(raw: Any, start_date: datetime.date, days_count: int) -> 
         tmax = daily.get("temperature_2m_max") or daily.get("temp_max") or daily.get("temperature_max")
         tmin = daily.get("temperature_2m_min") or daily.get("temp_min") or daily.get("temperature_min")
         codes = daily.get("weathercode") or daily.get("weather_code")
-        # try to align by date from start_date
         for i in range(days_count):
-            idx = None
-            # prefer matching by index (assuming API returned days in chronological order)
-            if times and i < len(times):
-                idx = i
+            idx = i if i < len(times) else None
             if idx is not None:
                 temp_val = None
-                # prefer tmax then tmin
                 if isinstance(tmax, (list, tuple)) and idx < len(tmax):
                     temp_val = tmax[idx]
                 elif isinstance(tmin, (list, tuple)) and idx < len(tmin):
                     temp_val = tmin[idx]
+                out[i]["temp"] = temp_val
                 code_val = None
                 if isinstance(codes, (list, tuple)) and idx < len(codes):
                     code_val = codes[idx]
-                out[i]["temp"] = temp_val
-                # map some WMO weather codes to text
-                code_map = {
-                    0: "Clear sky",
-                    1: "Mainly clear",
-                    2: "Partly cloudy",
-                    3: "Overcast",
-                    45: "Fog",
-                    48: "Fog",
-                    51: "Light drizzle",
-                    61: "Rain",
-                    71: "Snow",
-                }
                 if code_val is not None:
-                    out[i]["desc"] = code_map.get(int(code_val), "Weather unavailable")
+                    try:
+                        out[i]["desc"] = code_map.get(int(code_val), out[i]["desc"])
+                    except Exception:
+                        out[i]["desc"] = out[i]["desc"]
         return out
 
     # fallback: unknown format
@@ -203,6 +225,13 @@ def generate_itinerary(
             "weather": {"temp": day_weather.get("temp"), "desc": day_weather.get("desc")},
         }
 
+        # compute per-day budget from overall budget (proportional)
+        try:
+            per_day_budget = float(budget) / float(days_count) if budget and days_count > 0 else 0.0
+        except Exception:
+            per_day_budget = 0.0
+        per_day_budget = max(per_day_budget, 60.0)  # ensure reasonable minimum
+
         day_cost = 0.0
 
         for slot in ("morning", "afternoon", "evening"):
@@ -210,10 +239,27 @@ def generate_itinerary(
             hints = _map_activity_to_hints(label)
 
             candidate_place: Optional[Dict[str, Any]] = None
-            # try OSM lookup if we have lat/lon
+            candidates = []
+
+            # try OSM lookup if we have lat/lon, with progressive radii and looser hints fallback
             if lat is not None and lon is not None:
                 try:
-                    candidates = search_pois(lat=lat, lon=lon, kinds=hints, radius=5000, limit=20) or []
+                    for try_radius in (3000, 8000):
+                        try:
+                            candidates = search_pois(lat=lat, lon=lon, kinds=hints, radius=try_radius, limit=30) or []
+                        except Exception:
+                            candidates = []
+                        if candidates:
+                            break
+
+                    # if still empty, try looser hints
+                    if not candidates:
+                        loose_hints = ["tourism", "amenity"]
+                        try:
+                            candidates = search_pois(lat=lat, lon=lon, kinds=loose_hints, radius=8000, limit=30) or []
+                        except Exception:
+                            candidates = []
+
                 except Exception:
                     candidates = []
 
@@ -226,18 +272,15 @@ def generate_itinerary(
                     key_name = name.lower()
                     if key_name in used_names:
                         continue
-                    # simple heuristic: avoid names that are obviously not attractions
-                    tags = c.get("tags", {}) or {}
-                    # compute score
+                    # compute score using your existing heuristic
                     score = _score_candidate_for_activity(c, label)
-                    # prefer nodes whose name contains typical attraction words for museums/temples etc.
                     lower_name = name.lower()
                     if any(word in lower_name for word in ("museum", "gallery", "temple", "fort", "park", "garden", "viewpoint", "monument", "gallery", "palace", "beach", "zoo")):
                         score += 1.5
                     scored.append((score, c))
                 # sort by score desc
                 scored.sort(key=lambda x: x[0], reverse=True)
-                if scored and scored[0][0] > -100:  # if best is not heavily penalized
+                if scored and scored[0][0] > -100:
                     candidate_place = scored[0][1]
 
             # Build place object (either from candidate or placeholder)
@@ -251,7 +294,8 @@ def generate_itinerary(
                 }
                 used_names.add(place_obj["name"].lower())
             else:
-                # fallback placeholder
+                # fallback placeholder (log for debugging)
+                print(f"[itinerary] placeholder used for {label} on {current_date} (no candidate)")
                 ph = placeholder_place(label, destination)
                 place_obj = {
                     "name": ph["name"],
@@ -262,8 +306,12 @@ def generate_itinerary(
                 }
 
             day_entry[slot] = place_obj
-            # cost calc
-            day_cost += COST_MAP.get(slot, 0.0)
+
+            # dynamic cost: allocate per_slot using weights, with caps
+            slot_share = _SLOT_WEIGHTS.get(slot, 1.0/3.0)
+            slot_cost = round(per_day_budget * slot_share, 2)
+            slot_cost = max(10.0, min(slot_cost, per_day_budget * 0.6))
+            day_cost += slot_cost
 
         day_entry["estimated_cost"] = round(day_cost, 2)
         total_cost += day_cost
