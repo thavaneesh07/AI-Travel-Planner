@@ -1,0 +1,269 @@
+{
+  "Bangkok": [
+    { "name": "Mandarin Oriental Bangkok", "rating": 4.9, "price_per_night": 420, "address": "Chao Phraya River, Bangkok" },
+    { "name": "The Peninsula Bangkok", "rating": 4.8, "price_per_night": 350, "address": "Thonburi, Bangkok" },
+    { "name": "Siam Kempinski Hotel", "rating": 4.8, "price_per_night": 300, "address": "Siam, Bangkok" },
+    { "name": "Anantara Riverside Bangkok Resort", "rating": 4.7, "price_per_night": 260, "address": "Riverside, Bangkok" },
+    { "name": "W Bangkok", "rating": 4.7, "price_per_night": 240, "address": "Sathorn, Bangkok" },
+    { "name": "Banyan Tree Bangkok", "rating": 4.7, "price_per_night": 230, "address": "Sathon, Bangkok" }
+  ],
+
+  "London": [
+    {
+      "name": "The Savoy",
+      "rating": 4.9,
+      "price_per_night": 550,
+      "address": "Strand, London",
+      "booking_urls": {
+        "booking.com": "https://www.booking.com/hotel/gb/the-savoy.html",
+        "expedia": "https://www.expedia.com/London-Hotels-The-Savoy.h19273.Hotel-Information"
+      }
+    },
+    {
+      "name": "The Ritz London",
+      "rating": 4.8,
+      "price_per_night": 600,
+      "address": "Piccadilly, London",
+      "booking_urls": {
+        "booking.com": "https://www.booking.com/hotel/gb/the-ritz-london.html",
+        "expedia": "https://www.expedia.com/London-Hotels-The-Ritz-London.h19269.Hotel-Information"
+      }
+    },
+    {
+      "name": "The Langham London",
+      "rating": 4.7,
+      "price_per_night": 450,
+      "address": "Portland Place, London",
+      "booking_urls": {
+        "booking.com": "https://www.booking.com/hotel/gb/the-langham-london.html"
+      }
+    },
+    { "name": "Corinthia London", "rating": 4.8, "price_per_night": 620, "address": "Whitehall Place, London" },
+    { "name": "Shangri-La The Shard", "rating": 4.8, "price_per_night": 700, "address": "London Bridge, London" },
+    { "name": "Rosewood London", "rating": 4.7, "price_per_night": 550, "address": "High Holborn, London" }
+  ],
+
+  "Paris": [
+    {
+      "name": "Hotel Ritz Paris",
+      "rating": 4.9,
+      "price_per_night": 700,
+      "address": "Place Vendôme, Paris",
+      "booking_urls": {
+        "booking.com": "https://www.booking.com/hotel/fr/ritz-paris.html",
+        "expedia": "https://www.expedia.com/Paris-Hotels-Ritz-Paris.h28114.Hotel-Information"
+      }
+    },
+    {
+      "name": "Le Meurice",
+      "rating": 4.8,
+      "price_per_night": 650,
+      "address": "Rue de Rivoli, Paris",
+      "booking_urls": {
+        "booking.com": "https://www.booking.com/hotel/fr/le-meurice.html"
+      }
+    },
+    {
+      "name": "Shangri-La Paris",
+      "rating": 4.8,
+      "price_per_night": 620,
+      "address": "Avenue d'Iéna, Paris",
+      "booking_urls": {
+        "booking.com": "https://www.booking.com/hotel/fr/shangri-la-paris.html"
+      }
+    },
+    { "name": "Four Seasons Hotel George V", "rating": 4.9, "price_per_night": 950, "address": "Avenue George V, Paris" },
+    { "name": "Hotel Plaza Athénée", "rating": 4.8, "price_per_night": 880, "address": "Avenue Montaigne, Paris" },
+    { "name": "The Peninsula Paris", "rating": 4.8, "price_per_night": 780, "address": "Avenue Kléber, Paris" }
+  ],
+
+  "Dubai": [
+    {
+      "name": "Burj Al Arab",
+      "rating": 4.9,
+      "price_per_night": 1200,
+      "address": "Jumeirah St, Dubai",
+      "booking_urls": {
+        "booking.com": "https://www.booking.com/hotel/ae/burj-al-arab.html",
+        "expedia": "https://www.expedia.com/Dubai-Hotels-Burj-Al-Arab-Jumeirah.h527497.Hotel-Information"
+      }
+    },
+    {
+      "name": "Atlantis The Palm",
+      "rating": 4.8,
+      "price_per_night": 600,
+      "address": "Palm Jumeirah, Dubai",
+      "booking_urls": {
+        "booking.com": "https://www.booking.com/hotel/ae/atlantis-the-palm.html"
+      }
+    },
+    { "name": "Armani Hotel Dubai", "rating": 4.8, "price_per_night": 550, "address": "Burj Khalifa, Dubai" },
+    { "name": "Jumeirah Al Naseem", "rating": 4.8, "price_per_night": 650, "address": "Madinat Jumeirah, Dubai" },
+    { "name": "Waldorf Astoria Dubai Palm Jumeirah", "rating": 4.8, "price_per_night": 580, "address": "Palm Jumeirah, Dubai" },
+    { "name": "Address Downtown", "rating": 4.8, "price_per_night": 520, "address": "Downtown Dubai" }
+  ],
+
+  "Istanbul": [
+    { "name": "Ciragan Palace Kempinski", "rating": 4.9, "price_per_night": 500, "address": "Besiktas, Istanbul" },
+    { "name": "Four Seasons Istanbul at Sultanahmet", "rating": 4.8, "price_per_night": 450, "address": "Old City, Istanbul" },
+    { "name": "Swissotel The Bosphorus", "rating": 4.7, "price_per_night": 350, "address": "Macka, Istanbul" },
+    { "name": "Raffles Istanbul", "rating": 4.8, "price_per_night": 480, "address": "Zorlu Center, Istanbul" },
+    { "name": "The St. Regis Istanbul", "rating": 4.8, "price_per_night": 450, "address": "Macka, Istanbul" },
+    { "name": "Ajwa Hotel Sultanahmet", "rating": 4.8, "price_per_night": 300, "address": "Sultanahmet, Istanbul" }
+  ],
+
+  "Singapore": [
+    { "name": "Marina Bay Sands", "rating": 4.7, "price_per_night": 450, "address": "Bayfront Ave, Singapore" },
+    { "name": "Raffles Singapore", "rating": 4.9, "price_per_night": 700, "address": "Beach Road, Singapore" },
+    { "name": "The Fullerton Hotel", "rating": 4.7, "price_per_night": 380, "address": "Fullerton Square, Singapore" },
+    { "name": "The Capitol Kempinski Hotel", "rating": 4.8, "price_per_night": 420, "address": "Stamford Road, Singapore" },
+    { "name": "The St. Regis Singapore", "rating": 4.8, "price_per_night": 460, "address": "Tanglin Road, Singapore" },
+    { "name": "Pan Pacific Singapore", "rating": 4.7, "price_per_night": 350, "address": "Raffles Blvd, Singapore" }
+  ],
+
+  "Kuala Lumpur": [
+    { "name": "Grand Hyatt Kuala Lumpur", "rating": 4.8, "price_per_night": 180, "address": "Kuala Lumpur City Centre" },
+    { "name": "Mandarin Oriental KL", "rating": 4.7, "price_per_night": 220, "address": "Near KLCC, Kuala Lumpur" },
+    { "name": "The Ritz-Carlton KL", "rating": 4.6, "price_per_night": 200, "address": "Jalan Imbi, KL" },
+    { "name": "EQ Kuala Lumpur", "rating": 4.8, "price_per_night": 210, "address": "Jalan Sultan Ismail, KL" },
+    { "name": "The St. Regis Kuala Lumpur", "rating": 4.7, "price_per_night": 260, "address": "KL Sentral, Kuala Lumpur" },
+    { "name": "W Kuala Lumpur", "rating": 4.7, "price_per_night": 240, "address": "KLCC, Kuala Lumpur" }
+  ],
+
+  "New York": [
+    {
+      "name": "The Plaza Hotel",
+      "rating": 4.8,
+      "price_per_night": 750,
+      "address": "5th Ave, New York",
+      "booking_urls": {
+        "booking.com": "https://www.booking.com/hotel/us/the-plaza.html",
+        "expedia": "https://www.expedia.com/New-York-Hotels-The-Plaza-Hotel.h28044.Hotel-Information"
+      }
+    },
+    {
+      "name": "St. Regis New York",
+      "rating": 4.8,
+      "price_per_night": 800,
+      "address": "East 55th St, New York",
+      "booking_urls": {
+        "booking.com": "https://www.booking.com/hotel/us/the-st-regis-new-york.html"
+      }
+    },
+    {
+      "name": "The Peninsula New York",
+      "rating": 4.7,
+      "price_per_night": 650,
+      "address": "5th Ave, New York",
+      "booking_urls": {
+        "booking.com": "https://www.booking.com/hotel/us/the-peninsula-new-york.html"
+      }
+    },
+    { "name": "Four Seasons Hotel New York Downtown", "rating": 4.8, "price_per_night": 850, "address": "Tribeca, New York" },
+    { "name": "The Pierre, A Taj Hotel", "rating": 4.7, "price_per_night": 700, "address": "5th Ave, New York" },
+    { "name": "The Carlyle, A Rosewood Hotel", "rating": 4.7, "price_per_night": 750, "address": "Upper East Side, New York" }
+  ],
+
+  "Tokyo": [
+    {
+      "name": "Park Hyatt Tokyo",
+      "rating": 4.8,
+      "price_per_night": 350,
+      "address": "Shinjuku, Tokyo",
+      "booking_urls": {
+        "booking.com": "https://www.booking.com/hotel/jp/park-hyatt-tokyo.html"
+      }
+    },
+    {
+      "name": "Mandarin Oriental Tokyo",
+      "rating": 4.9,
+      "price_per_night": 500,
+      "address": "Nihonbashi, Tokyo",
+      "booking_urls": {
+        "official": "https://www.mandarinoriental.com/tokyo",
+        "booking.com": "https://www.booking.com/hotel/jp/mandarin-oriental-tokyo.html"
+      }
+    },
+    {
+      "name": "The Okura Tokyo",
+      "rating": 4.8,
+      "price_per_night": 320,
+      "address": "Minato City, Tokyo",
+      "booking_urls": {
+        "booking.com": "https://www.booking.com/hotel/jp/the-okura-tokyo.html"
+      }
+    },
+    { "name": "The Tokyo EDITION, Toranomon", "rating": 4.8, "price_per_night": 420, "address": "Toranomon, Tokyo" },
+    { "name": "Aman Tokyo", "rating": 4.9, "price_per_night": 900, "address": "Otemachi, Tokyo" },
+    { "name": "The Peninsula Tokyo", "rating": 4.8, "price_per_night": 480, "address": "Marunouchi, Tokyo" }
+  ],
+
+  "Antalya": [
+    { "name": "Rixos Downtown Antalya", "rating": 4.7, "price_per_night": 200, "address": "Konyaalti, Antalya" },
+    { "name": "Akra Hotel", "rating": 4.8, "price_per_night": 180, "address": "Lara Coast, Antalya" },
+    { "name": "Titanic Beach Lara", "rating": 4.7, "price_per_night": 220, "address": "Lara Beach, Antalya" },
+    { "name": "Delphin Imperial Lara", "rating": 4.7, "price_per_night": 250, "address": "Lara Beach, Antalya" },
+    { "name": "Maxx Royal Kemer Resort", "rating": 4.8, "price_per_night": 600, "address": "Kemer, Antalya" },
+    { "name": "Regnum Carya", "rating": 4.8, "price_per_night": 450, "address": "Belek, Antalya" }
+  ],
+
+  "Hong Kong": [
+    { "name": "The Peninsula Hong Kong", "rating": 4.8, "price_per_night": 500, "address": "Tsim Sha Tsui, Hong Kong" },
+    { "name": "Mandarin Oriental Hong Kong", "rating": 4.8, "price_per_night": 480, "address": "Central, Hong Kong" },
+    { "name": "Island Shangri-La", "rating": 4.7, "price_per_night": 420, "address": "Admiralty, Hong Kong" },
+    { "name": "Four Seasons Hong Kong", "rating": 4.9, "price_per_night": 650, "address": "Central, Hong Kong" },
+    { "name": "The Upper House", "rating": 4.9, "price_per_night": 620, "address": "Admiralty, Hong Kong" },
+    { "name": "Rosewood Hong Kong", "rating": 4.9, "price_per_night": 700, "address": "Victoria Dockside, Hong Kong" }
+  ],
+
+  "Mumbai": [
+    {
+      "name": "Taj Mahal Palace",
+      "rating": 4.8,
+      "price_per_night": 300,
+      "address": "Colaba, Mumbai",
+      "booking_urls": {
+        "booking.com": "https://www.booking.com/hotel/in/the-taj-mahal-palace.html"
+      }
+    },
+    {
+      "name": "Trident Nariman Point",
+      "rating": 4.6,
+      "price_per_night": 180,
+      "address": "Nariman Point, Mumbai",
+      "booking_urls": {
+        "booking.com": "https://www.booking.com/hotel/in/trident-nariman-point.html"
+      }
+    },
+    {
+      "name": "JW Marriott Juhu",
+      "rating": 4.6,
+      "price_per_night": 250,
+      "address": "Juhu Beach, Mumbai",
+      "booking_urls": {
+        "booking.com": "https://www.booking.com/hotel/in/jw-marriott-mumbai-juhu.html"
+      }
+    },
+    { "name": "The St. Regis Mumbai", "rating": 4.7, "price_per_night": 260, "address": "Lower Parel, Mumbai" },
+    { "name": "ITC Grand Central", "rating": 4.6, "price_per_night": 200, "address": "Parel, Mumbai" },
+    { "name": "The Oberoi Mumbai", "rating": 4.8, "price_per_night": 280, "address": "Nariman Point, Mumbai" }
+  ],
+
+  "Seoul": [
+    { "name": "Signiel Seoul", "rating": 4.9, "price_per_night": 450, "address": "Lotte World Tower, Seoul" },
+    { "name": "The Shilla Seoul", "rating": 4.8, "price_per_night": 350, "address": "Jangchungdong, Seoul" },
+    { "name": "Four Seasons Seoul", "rating": 4.7, "price_per_night": 300, "address": "Gwanghwamun, Seoul" },
+    { "name": "Grand Hyatt Seoul", "rating": 4.7, "price_per_night": 280, "address": "Yongsan, Seoul" },
+    { "name": "InterContinental Seoul COEX", "rating": 4.7, "price_per_night": 260, "address": "Gangnam, Seoul" },
+    { "name": "Lotte Hotel Seoul", "rating": 4.7, "price_per_night": 300, "address": "Myeongdong, Seoul" }
+  ],
+
+  "Prague": [
+    { "name": "Four Seasons Hotel Prague", "rating": 4.8, "price_per_night": 400, "address": "Old Town, Prague" },
+    { "name": "Hotel Kings Court", "rating": 4.7, "price_per_night": 220, "address": "Republic Square, Prague" },
+    { "name": "Grand Hotel Bohemia", "rating": 4.7, "price_per_night": 180, "address": "Staré Město, Prague" },
+    { "name": "Aria Hotel Prague", "rating": 4.8, "price_per_night": 350, "address": "Mala Strana, Prague" },
+    { "name": "Mandarin Oriental Prague", "rating": 4.8, "price_per_night": 420, "address": "Lesser Town, Prague" },
+    { "name": "Hotel Paris Prague", "rating": 4.7, "price_per_night": 260, "address": "Old Town, Prague" }
+  ]
+}

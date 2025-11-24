@@ -1,0 +1,417 @@
+{
+  "Bangkok": {
+    "sightseeing": [
+      "The Grand Palace",
+      "Wat Arun",
+      "Wat Pho",
+      "Chao Phraya River Cruise",
+      "Asiatique The Riverfront"
+    ],
+    "museum": [
+      "Bangkok National Museum",
+      "Museum of Siam",
+      "Royal Barge Museum",
+      "Jim Thompson House"
+    ],
+    "food_experience": [
+      "Chinatown (Yaowarat)",
+      "Ratchada Train Market",
+      "Floating Market",
+      "Bangkok Street Food Tour"
+    ],
+    "shopping": [
+      "Chatuchak Weekend Market",
+      "Siam Paragon",
+      "CentralWorld",
+      "ICONSIAM"
+    ],
+    "park": [
+      "Lumphini Park",
+      "Benjakitti Park",
+      "Queen Sirikit Park"
+    ]
+  },
+
+  "London": {
+    "sightseeing": [
+      "London Eye",
+      "Tower Bridge",
+      "Big Ben",
+      "St Paul's Cathedral"
+    ],
+    "museum": [
+      "British Museum",
+      "Tate Modern",
+      "Natural History Museum",
+      "Victoria & Albert Museum"
+    ],
+    "food_experience": [
+      "Borough Market",
+      "Camden Market",
+      "Dishoom",
+      "Brick Lane Food Tour"
+    ],
+    "shopping": [
+      "Oxford Street",
+      "Covent Garden",
+      "Harrods",
+      "Regent Street"
+    ],
+    "park": [
+      "Hyde Park",
+      "Regent’s Park",
+      "Greenwich Park"
+    ]
+  },
+
+  "Paris": {
+    "sightseeing": [
+      "Eiffel Tower",
+      "Arc de Triomphe",
+      "Montmartre",
+      "Sacre-Coeur Basilica",
+      "Seine River Cruise"
+    ],
+    "museum": [
+      "Louvre Museum",
+      "Musee d'Orsay",
+      "Centre Pompidou",
+      "Orangerie Museum"
+    ],
+    "food_experience": [
+      "Le Marais Food Tour",
+      "Montparnasse Creperie Street",
+      "Rue Cler Market",
+      "Paris Bakery Tour"
+    ],
+    "shopping": [
+      "Champs-Elysees",
+      "Galeries Lafayette",
+      "Le Bon Marché",
+      "Saint-Germain-des-Prés Boutiques"
+    ],
+    "park": [
+      "Luxembourg Gardens",
+      "Tuileries Garden",
+      "Parc Monceau"
+    ]
+  },
+
+  "Dubai": {
+    "sightseeing": [
+      "Burj Khalifa",
+      "Dubai Marina",
+      "Palm Jumeirah",
+      "Dubai Fountain"
+    ],
+    "museum": [
+      "Museum of the Future",
+      "Etihad Museum",
+      "Dubai Museum"
+    ],
+    "food_experience": [
+      "Global Village",
+      "Dubai Mall Food Court",
+      "Al Fahidi Street Food",
+      "Deira Waterfront"
+    ],
+    "shopping": [
+      "Dubai Mall",
+      "Mall of the Emirates",
+      "Souk Madinat",
+      "Gold Souk"
+    ],
+    "park": [
+      "Dubai Miracle Garden",
+      "Zabeel Park",
+      "Dubai Creek Park"
+    ]
+  },
+
+  "Istanbul": {
+    "sightseeing": [
+      "Hagia Sophia",
+      "Blue Mosque",
+      "Galata Tower",
+      "Topkapi Palace",
+      "Bosphorus Cruise"
+    ],
+    "museum": [
+      "Istanbul Archaeology Museum",
+      "Turkish & Islamic Arts Museum",
+      "Sakip Sabanci Museum"
+    ],
+    "food_experience": [
+      "Kadikoy Food Market",
+      "Istiklal Street Food",
+      "Spice Bazaar"
+    ],
+    "shopping": [
+      "Grand Bazaar",
+      "Istinye Park",
+      "Bagdat Street"
+    ],
+    "park": [
+      "Gulhane Park",
+      "Emirgan Park"
+    ]
+  },
+
+  "Singapore": {
+    "sightseeing": [
+      "Marina Bay Sands",
+      "Gardens by the Bay",
+      "Merlion Park",
+      "Sentosa Island"
+    ],
+    "museum": [
+      "ArtScience Museum",
+      "National Museum of Singapore",
+      "Asian Civilisations Museum"
+    ],
+    "food_experience": [
+      "Lau Pa Sat",
+      "Newton Food Centre",
+      "Little India Food Tour"
+    ],
+    "shopping": [
+      "Orchard Road",
+      "VivoCity",
+      "Bugis Street Market"
+    ],
+    "park": [
+      "Botanic Gardens",
+      "East Coast Park",
+      "MacRitchie Reservoir"
+    ]
+  },
+
+  "Kuala Lumpur": {
+    "sightseeing": [
+      "Petronas Twin Towers",
+      "Batu Caves",
+      "KL Tower",
+      "Merdeka Square"
+    ],
+    "museum": [
+      "Islamic Arts Museum",
+      "National Museum of Malaysia",
+      "Bank Negara Museum"
+    ],
+    "food_experience": [
+      "Jalan Alor Night Market",
+      "Central Market Food Court",
+      "Petaling Street Food"
+    ],
+    "shopping": [
+      "Pavilion KL",
+      "Suria KLCC",
+      "Berjaya Times Square"
+    ],
+    "park": [
+      "KLCC Park",
+      "Perdana Botanical Garden"
+    ]
+  },
+
+  "New York": {
+    "sightseeing": [
+      "Statue of Liberty",
+      "Times Square",
+      "Empire State Building",
+      "Brooklyn Bridge"
+    ],
+    "museum": [
+      "Metropolitan Museum of Art",
+      "Museum of Modern Art",
+      "American Museum of Natural History"
+    ],
+    "food_experience": [
+      "Chelsea Market",
+      "Katz’s Delicatessen",
+      "Smorgasburg",
+      "Little Italy Food Tour"
+    ],
+    "shopping": [
+      "5th Avenue",
+      "SoHo Boutiques",
+      "Hudson Yards"
+    ],
+    "park": [
+      "Central Park",
+      "Bryant Park",
+      "Prospect Park"
+    ]
+  },
+
+  "Tokyo": {
+    "sightseeing": [
+      "Tokyo Skytree",
+      "Senso-ji Temple",
+      "Meiji Shrine",
+      "Shibuya Crossing"
+    ],
+    "museum": [
+      "TeamLab Borderless",
+      "Edo-Tokyo Museum",
+      "Mori Art Museum"
+    ],
+    "food_experience": [
+      "Tsukiji Outer Market",
+      "Asakusa Street Food",
+      "Shinjuku Omoide Yokocho"
+    ],
+    "shopping": [
+      "Shibuya Scramble Square",
+      "Ginza Six",
+      "Akihabara"
+    ],
+    "park": [
+      "Shinjuku Gyoen Park",
+      "Ueno Park",
+      "Yoyogi Park"
+    ]
+  },
+
+  "Antalya": {
+    "sightseeing": [
+      "Old Town (Kaleici)",
+      "Konyaalti Beach",
+      "Duden Waterfalls",
+      "Antalya Marina"
+    ],
+    "museum": [
+      "Antalya Museum",
+      "Suna-Inan Kirac Kaleici Museum"
+    ],
+    "food_experience": [
+      "Lara Beach Food Street",
+      "Old Town Restaurants",
+      "Seafood Marina Walk"
+    ],
+    "shopping": [
+      "MarkAntalya Mall",
+      "Old Bazaar Antalya"
+    ],
+    "park": [
+      "Karaalioglu Park",
+      "Ataturk Park"
+    ]
+  },
+
+  "Hong Kong": {
+    "sightseeing": [
+      "Victoria Peak",
+      "Tsim Sha Tsui Promenade",
+      "Big Buddha (Tian Tan Buddha)",
+      "Star Ferry Harbor Tour"
+    ],
+    "museum": [
+      "Hong Kong Museum of History",
+      "M+ Museum",
+      "Hong Kong Science Museum"
+    ],
+    "food_experience": [
+      "Temple Street Night Market",
+      "Mong Kok Street Food",
+      "Dim Sum at Tim Ho Wan"
+    ],
+    "shopping": [
+      "Causeway Bay",
+      "Harbour City",
+      "Ladies’ Market"
+    ],
+    "park": [
+      "Victoria Park",
+      "Nan Lian Garden"
+    ]
+  },
+
+  "Mumbai": {
+    "sightseeing": [
+      "Gateway of India",
+      "Marine Drive",
+      "Hanging Gardens",
+      "Bandra Fort",
+      "Elephanta Caves"
+    ],
+    "museum": [
+      "Chhatrapati Shivaji Maharaj Vastu Sangrahalaya",
+      "Dr Bhau Daji Lad Museum",
+      "National Gallery of Modern Art"
+    ],
+    "food_experience": [
+      "Juhu Beach Street Food",
+      "Mohammed Ali Road Food Walk",
+      "Colaba Food Tour",
+      "Girgaum Chowpatty Snacks"
+    ],
+    "shopping": [
+      "Colaba Causeway",
+      "Linking Road Bandra",
+      "Fashion Street"
+    ],
+    "park": [
+      "Sanjay Gandhi National Park",
+      "Shivaji Park",
+      "Five Gardens"
+    ]
+  },
+
+  "Seoul": {
+    "sightseeing": [
+      "Gyeongbokgung Palace",
+      "N Seoul Tower",
+      "Bukchon Hanok Village",
+      "Lotte World Tower"
+    ],
+    "museum": [
+      "National Museum of Korea",
+      "War Memorial of Korea",
+      "Seoul Museum of Art"
+    ],
+    "food_experience": [
+      "Myeongdong Street Food",
+      "Gwangjang Market",
+      "Hongdae Food Walk"
+    ],
+    "shopping": [
+      "Myeongdong",
+      "Dongdaemun Design Plaza",
+      "Starfield COEX Mall"
+    ],
+    "park": [
+      "Namsan Park",
+      "Olympic Park"
+    ]
+  },
+
+  "Prague": {
+    "sightseeing": [
+      "Charles Bridge",
+      "Prague Castle",
+      "Old Town Square",
+      "Astronomical Clock",
+      "Vysehrad"
+    ],
+    "museum": [
+      "National Museum",
+      "Kafka Museum",
+      "Prague Jewish Museum"
+    ],
+    "food_experience": [
+      "Prague Old Town Food Walk",
+      "Lokal Dlouhááá",
+      "Traditional Czech Pastry Tour"
+    ],
+    "shopping": [
+      "Palladium Mall",
+      "Wenceslas Square Shops",
+      "Na Prikope Street"
+    ],
+    "park": [
+      "Letna Park",
+      "Stromovka Park"
+    ]
+  }
+}

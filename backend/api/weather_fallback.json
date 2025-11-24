@@ -1,0 +1,141 @@
+{
+  "Bangkok": [
+    { "temp": 33, "desc": "Partly cloudy" },
+    { "temp": 34, "desc": "Sunny" },
+    { "temp": 32, "desc": "Humid and cloudy" },
+    { "temp": 33, "desc": "Light rain showers" },
+    { "temp": 34, "desc": "Sunny" },
+    { "temp": 33, "desc": "Partly cloudy" },
+    { "temp": 32, "desc": "Thunderstorm" }
+  ],
+
+  "London": [
+    { "temp": 12, "desc": "Overcast" },
+    { "temp": 11, "desc": "Light drizzle" },
+    { "temp": 10, "desc": "Rain" },
+    { "temp": 9, "desc": "Cloudy" },
+    { "temp": 11, "desc": "Partly cloudy" },
+    { "temp": 12, "desc": "Sunny intervals" },
+    { "temp": 13, "desc": "Windy" }
+  ],
+
+  "Paris": [
+    { "temp": 14, "desc": "Sunny" },
+    { "temp": 13, "desc": "Cloudy" },
+    { "temp": 12, "desc": "Partly cloudy" },
+    { "temp": 11, "desc": "Rain showers" },
+    { "temp": 13, "desc": "Light drizzle" },
+    { "temp": 14, "desc": "Sunny intervals" },
+    { "temp": 15, "desc": "Clear sky" }
+  ],
+
+  "Dubai": [
+    { "temp": 36, "desc": "Sunny" },
+    { "temp": 37, "desc": "Hot and sunny" },
+    { "temp": 38, "desc": "Clear sky" },
+    { "temp": 36, "desc": "Hot" },
+    { "temp": 37, "desc": "Sunny" },
+    { "temp": 38, "desc": "Clear sky" },
+    { "temp": 36, "desc": "Windy" }
+  ],
+
+  "Istanbul": [
+    { "temp": 19, "desc": "Partly cloudy" },
+    { "temp": 18, "desc": "Light rain" },
+    { "temp": 17, "desc": "Cloudy" },
+    { "temp": 16, "desc": "Overcast" },
+    { "temp": 18, "desc": "Sunny intervals" },
+    { "temp": 19, "desc": "Clear sky" },
+    { "temp": 17, "desc": "Rain showers" }
+  ],
+
+  "Singapore": [
+    { "temp": 31, "desc": "Humid and cloudy" },
+    { "temp": 30, "desc": "Thunderstorm" },
+    { "temp": 31, "desc": "Rain showers" },
+    { "temp": 32, "desc": "Sunny" },
+    { "temp": 31, "desc": "Cloudy" },
+    { "temp": 32, "desc": "Sunny intervals" },
+    { "temp": 30, "desc": "Heavy rain" }
+  ],
+
+  "Kuala Lumpur": [
+    { "temp": 30, "desc": "Rain showers" },
+    { "temp": 31, "desc": "Humid and sunny" },
+    { "temp": 29, "desc": "Thunderstorm" },
+    { "temp": 30, "desc": "Cloudy" },
+    { "temp": 31, "desc": "Sunny" },
+    { "temp": 30, "desc": "Rain" },
+    { "temp": 29, "desc": "Cloudy" }
+  ],
+
+  "New York": [
+    { "temp": 10, "desc": "Windy" },
+    { "temp": 9, "desc": "Partly cloudy" },
+    { "temp": 8, "desc": "Light rain" },
+    { "temp": 7, "desc": "Clear sky" },
+    { "temp": 9, "desc": "Sunny" },
+    { "temp": 10, "desc": "Cloudy" },
+    { "temp": 11, "desc": "Overcast" }
+  ],
+
+  "Tokyo": [
+    { "temp": 16, "desc": "Clear sky" },
+    { "temp": 15, "desc": "Partly cloudy" },
+    { "temp": 14, "desc": "Rain showers" },
+    { "temp": 16, "desc": "Sunny" },
+    { "temp": 17, "desc": "Cloudy" },
+    { "temp": 15, "desc": "Light drizzle" },
+    { "temp": 16, "desc": "Clear sky" }
+  ],
+
+  "Antalya": [
+    { "temp": 22, "desc": "Sunny" },
+    { "temp": 23, "desc": "Partly cloudy" },
+    { "temp": 22, "desc": "Clear sky" },
+    { "temp": 21, "desc": "Cloudy" },
+    { "temp": 22, "desc": "Sunny intervals" },
+    { "temp": 23, "desc": "Windy" },
+    { "temp": 21, "desc": "Light rain" }
+  ],
+
+  "Hong Kong": [
+    { "temp": 27, "desc": "Humid and cloudy" },
+    { "temp": 28, "desc": "Thunderstorm" },
+    { "temp": 27, "desc": "Rain showers" },
+    { "temp": 29, "desc": "Sunny" },
+    { "temp": 28, "desc": "Partly cloudy" },
+    { "temp": 29, "desc": "Clear sky" },
+    { "temp": 27, "desc": "Heavy rain" }
+  ],
+
+  "Mumbai": [
+    { "temp": 30, "desc": "Humid and cloudy" },
+    { "temp": 31, "desc": "Sunny" },
+    { "temp": 30, "desc": "Clear sky" },
+    { "temp": 31, "desc": "Partly cloudy" },
+    { "temp": 30, "desc": "Rain" },
+    { "temp": 32, "desc": "Sunny" },
+    { "temp": 31, "desc": "Humid" }
+  ],
+
+  "Seoul": [
+    { "temp": 14, "desc": "Cloudy" },
+    { "temp": 13, "desc": "Partly cloudy" },
+    { "temp": 12, "desc": "Rain showers" },
+    { "temp": 11, "desc": "Sunny intervals" },
+    { "temp": 13, "desc": "Clear sky" },
+    { "temp": 12, "desc": "Overcast" },
+    { "temp": 14, "desc": "Windy" }
+  ],
+
+  "Prague": [
+    { "temp": 10, "desc": "Cloudy" },
+    { "temp": 9, "desc": "Rain showers" },
+    { "temp": 8, "desc": "Overcast" },
+    { "temp": 10, "desc": "Partly cloudy" },
+    { "temp": 11, "desc": "Sunny intervals" },
+    { "temp": 9, "desc": "Light rain" },
+    { "temp": 10, "desc": "Clear sky" }
+  ]
+}
