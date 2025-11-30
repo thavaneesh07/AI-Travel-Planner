@@ -4,6 +4,7 @@ from api.groq_service import generate_activity_types
 from api.osm_service import geocode, search_pois, placeholder_place, load_local_fallback_spots
 from api.weather_service import get_weather_forecast
 from state import get_trip, set_trip
+__all__ = ["generate_itinerary", "apply_itinerary_modification"]
 from datetime import datetime, timedelta
 import random
 import math
@@ -58,7 +59,7 @@ def _normalize_weather(raw: Any, start_date: datetime.date, days_count: int) -> 
     # -------------------------------------------------------------------
     try:
         # Check if raw is a list AND contains fallback keys
-        if isinstance(raw, list) and "temp" in raw[0]:
+        if isinstance(raw, list) and len(raw) > 0 and isinstance(raw[0], dict) and "temp" in raw[0]:
             for i in range(days_count):
                 src = raw[i % len(raw)]  # loop values if fewer entries
                 out[i]["temp"] = src.get("temp")
@@ -181,8 +182,6 @@ def generate_itinerary(destination, start_date, end_date, interests, budget):
         lon = float(coords["lon"])
     except:
         lat = lon = None
-
-    os.environ["DESTINATION_NAME"] = destination
 
     # WEATHER FETCH + FALLBACK ------------------------------------------------
     try:
@@ -348,3 +347,39 @@ def generate_itinerary(destination, start_date, end_date, interests, budget):
         pass
 
     return final
+# --- NEW: MODIFY EXISTING ITINERARY SLOT -----------------------------------
+def apply_itinerary_modification(itinerary: dict, changes: dict):
+    """
+    Example 'changes':
+    {
+        "day2": { "morning": "Eiffel Tower" },
+        "day3": { "evening": "Louvre Museum" }
+    }
+    """
+    days = itinerary.get("days", [])
+
+    for day_key, day_changes in changes.items():
+        try:
+            index = int(day_key.replace("day", "")) - 1
+            if index < 0 or index >= len(days):
+                continue
+
+            day = days[index]
+
+            for slot, new_value in day_changes.items():
+                if slot in ("morning", "afternoon", "evening"):
+
+                    # If AI sends only the name (string)
+                    if isinstance(new_value, str):
+                        if isinstance(day.get(slot), dict):
+                            day[slot]["name"] = new_value
+                        else:
+                            day[slot] = {"name": new_value}
+                    else:
+                        # AI sent full object
+                        day[slot] = new_value
+
+        except Exception as e:
+            print("Modification error:", e)
+
+    return itinerary

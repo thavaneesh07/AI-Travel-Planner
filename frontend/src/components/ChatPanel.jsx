@@ -20,7 +20,7 @@ function ChatPanel({ onAction }) {
     if (!message.trim()) return;
 
     const userMsg = { role: "user", text: message };
-    setMessages((prev) => [...prev, userMsg]);
+    setMessages(prev => [...prev, userMsg]);
     setMessage("");
     setLoading(true);
 
@@ -28,25 +28,35 @@ function ChatPanel({ onAction }) {
       const res = await postChat({ messages: [...messages, userMsg] });
 
       if (res?.assistant) {
-        setMessages((prev) => [
-          ...prev, 
+        // show assistant reply
+        setMessages(prev => [
+          ...prev,
           { role: "assistant", text: res.assistant.text }
         ]);
 
-        // action sent by AI (e.g., "generate_trip")
+        // 🔥 PARTIAL update (modify itinerary)
+        if (res.assistant.action === "modify_itinerary" && res.assistant.changes) {
+          window.dispatchEvent(
+            new CustomEvent("itineraryChanges", {
+              detail: res.assistant.changes
+            })
+          );
+        }
+
+        // 🔥 Trigger frontend action
         if (res.assistant.action && onAction) {
           onAction(res.assistant.action);
         }
 
       } else {
-        setMessages((prev) => [
+        setMessages(prev => [
           ...prev,
           { role: "assistant", text: "Hmm, I didn't understand that." }
         ]);
       }
 
     } catch (error) {
-      setMessages((prev) => [
+      setMessages(prev => [
         ...prev,
         { role: "assistant", text: "❌ Server error. Try again later." }
       ]);

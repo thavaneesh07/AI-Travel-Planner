@@ -104,9 +104,20 @@ export async function postChat(payload) {
       throw new Error("Chat API failed");
     }
 
-    return await res.json();
+    const data = await res.json();
+
+    // 🔥 Make sure action + changes are returned to ChatPanel.jsx
+    return {
+      assistant: {
+        text: data.assistant.text,
+        action: data.assistant.action || null,
+        changes: data.assistant.changes || null,
+      }
+    };
+
   } catch (error) {
     console.error("❌ postChat error:", error);
     return { assistant: { text: "Server error. Try again later." } };
   }
 }
+
