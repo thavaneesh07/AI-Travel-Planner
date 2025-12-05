@@ -77,50 +77,86 @@ function Timeline({ days = [], selectedDay, onDaySelect }) {
   };
 
   return (
-    <div className="flex flex-col gap-4">
-      {localDays.map((day, i) => {
-        const dateString = day.date || getDateForDay(i);
+    <div className="relative">
+      {/* Vertical Timeline Line */}
+      <div className="absolute left-8 top-0 bottom-0 w-1 bg-gradient-to-b from-blue-400 to-purple-400 rounded-full"></div>
 
-        return (
-          <div
-            key={day.day}
-            onClick={() => onDaySelect(day.day)}
-            className={`cursor-pointer p-4 border rounded-xl shadow-sm transition-all duration-300 ${
-              selectedDay === day.day
-                ? "bg-blue-100 border-blue-400"
-                : "bg-white hover:bg-gray-50"
-            }`}
-          >
-            <div className="flex items-center justify-between">
-              <h3 className="font-semibold text-blue-700 text-lg">
-                Day {day.day} — {dateString}
-              </h3>
-              <p className="text-gray-600 text-sm">
-                💸 ${day.estimated_cost ?? 0}
-              </p>
+      <div className="space-y-8">
+        {localDays.map((day, i) => {
+          const dateString = day.date || getDateForDay(i);
+          const isSelected = selectedDay === day.day;
+
+          return (
+            <div
+              key={day.day}
+              onClick={() => onDaySelect(day.day)}
+              className={`relative cursor-pointer ml-16 p-6 bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-500 transform hover:scale-105 border-l-4 ${
+                isSelected
+                  ? "border-blue-500 bg-gradient-to-r from-blue-50 to-indigo-50 shadow-lg"
+                  : "border-gray-300 hover:border-blue-300"
+              }`}
+            >
+              {/* Timeline Dot */}
+              <div
+                className={`absolute -left-12 top-6 w-6 h-6 rounded-full border-4 border-white shadow-lg transition-all duration-300 ${
+                  isSelected ? "bg-blue-500 animate-pulse" : "bg-gray-400"
+                }`}
+              ></div>
+
+              {/* Day Header */}
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-bold text-xl text-blue-700 flex items-center gap-2">
+                  <span className="text-2xl">📅</span>
+                  Day {day.day} — {dateString}
+                </h3>
+                <div className="text-right">
+                  <p className="text-lg font-semibold text-green-600 flex items-center gap-1">
+                    <span>💸</span> ${day.estimated_cost ?? 0}
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    🌤 {day.weather?.temp ?? "--"}°C, {day.weather?.desc ?? "No data"}
+                  </p>
+                </div>
+              </div>
+
+              {/* Activities */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-gradient-to-br from-yellow-50 to-orange-50 p-4 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-300">
+                  <h4 className="font-semibold text-orange-700 flex items-center gap-2 mb-2">
+                    <span className="text-xl">🌅</span> Morning
+                  </h4>
+                  <p className="text-gray-800 text-sm">
+                    {day.morning?.name || String(day.morning)}
+                  </p>
+                </div>
+                <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-4 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-300">
+                  <h4 className="font-semibold text-indigo-700 flex items-center gap-2 mb-2">
+                    <span className="text-xl">🌇</span> Afternoon
+                  </h4>
+                  <p className="text-gray-800 text-sm">
+                    {day.afternoon?.name || String(day.afternoon)}
+                  </p>
+                </div>
+                <div className="bg-gradient-to-br from-purple-50 to-pink-50 p-4 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-300">
+                  <h4 className="font-semibold text-pink-700 flex items-center gap-2 mb-2">
+                    <span className="text-xl">🌃</span> Evening
+                  </h4>
+                  <p className="text-gray-800 text-sm">
+                    {day.evening?.name || String(day.evening)}
+                  </p>
+                </div>
+              </div>
+
+              {/* Selected Indicator */}
+              {isSelected && (
+                <div className="absolute top-2 right-2 text-blue-500 animate-bounce">
+                  <span className="text-xl">✨</span>
+                </div>
+              )}
             </div>
-
-            <p className="text-sm text-gray-700 mt-1">
-              🌤 {day.weather?.temp ?? "--"}°C, {day.weather?.desc ?? "No data"}
-            </p>
-
-            <ul className="mt-2 space-y-1 text-gray-800">
-              <li>
-                🌅 <strong>Morning:</strong>{" "}
-                {day.morning?.name || String(day.morning)}
-              </li>
-              <li>
-                🌇 <strong>Afternoon:</strong>{" "}
-                {day.afternoon?.name || String(day.afternoon)}
-              </li>
-              <li>
-                🌃 <strong>Evening:</strong>{" "}
-                {day.evening?.name || String(day.evening)}
-              </li>
-            </ul>
-          </div>
-        );
-      })}
+          );
+        })}
+      </div>
     </div>
   );
 }
