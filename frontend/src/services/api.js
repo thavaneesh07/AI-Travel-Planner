@@ -1,7 +1,7 @@
 import axios from "axios";
 
 // ✅ Base URL of your FastAPI backend
-const API_BASE_URL = "http://127.0.0.1:8000/api";
+const API_BASE_URL = "http://127.0.0.1:8001/api";
 
 /**
  * Parse a user message into structured trip data
@@ -57,7 +57,7 @@ export const getSuggestions = async (tripData) => {
       ) || [],
   };
 
-  const res = await fetch("http://127.0.0.1:8000/api/suggestions", {
+  const res = await fetch("http://127.0.0.1:8001/api/suggestions", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
@@ -69,7 +69,7 @@ export const getSuggestions = async (tripData) => {
 
 export async function getHotels(data) {
   try {
-    const res = await fetch("http://localhost:8000/api/hotels", {
+    const res = await fetch("http://localhost:8001/api/hotels", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -94,7 +94,7 @@ export async function getHotels(data) {
 // 🚀 Universal Chat Endpoint for ChatPanel
 export async function postChat(payload) {
   try {
-    const res = await fetch("http://127.0.0.1:8000/chat", {
+    const res = await fetch("http://127.0.0.1:8001/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),

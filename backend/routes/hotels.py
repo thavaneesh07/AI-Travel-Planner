@@ -5,7 +5,7 @@ import os
 import json
 import httpx
 
-from utils.hotel_ranker import rank_hotels
+from ..utils.hotel_ranker import rank_hotels
 
 router = APIRouter()
 

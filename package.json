@@ -1,0 +1,11 @@
+{
+  "name": "ai-travel-planner-root",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "concurrently \"d:/Projects/AI-Travel-Planner/.venv\\Scripts\\python.exe -m uvicorn backend.main:app --host 127.0.0.1 --port 8001 --reload\" \"cd frontend && npm run dev\""
+  },
+  "devDependencies": {
+    "concurrently": "^8.0.0"
+  }
+}

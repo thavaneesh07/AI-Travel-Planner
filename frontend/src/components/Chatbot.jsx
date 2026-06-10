@@ -1,5 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
-import { postChat } from "../services/api";  // NEW unified chat endpoint
+import axios from "axios";
+import MapView from "./MapView";
+import { v4 as uuidv4 } from "uuid"; // Needs npm install uuid
 
 function Chatbot() {
   const [message, setMessage] = useState("");
@@ -7,6 +9,9 @@ function Chatbot() {
     { role: "assistant", text: "Hi! 👋 I'm your AI travel assistant. How can I help today?" }
   ]);
   const [loading, setLoading] = useState(false);
+  const [itinerary, setItinerary] = useState(null);
+  const [budgetInfo, setBudgetInfo] = useState(null);
+  const [sessionId] = useState(uuidv4()); // Maintain conversation context
 
   const scrollRef = useRef(null);
 
@@ -18,44 +23,37 @@ function Chatbot() {
 
   const sendMessage = async () => {
     if (!message.trim()) return;
-
     const userMsg = { role: "user", text: message };
     setMessages((prev) => [...prev, userMsg]);
     setMessage("");
     setLoading(true);
 
     try {
-      const res = await postChat({ messages: [...messages, userMsg] });
+      const response = await axios.post("http://127.0.0.1:8000/api/generate", {
+        session_id: sessionId,
+        message: userMsg.text,
+        history: messages
+      });
 
-      // Expected format:
-      // { assistant: { text: "...", action?: { type: "...", ... } } }
+      const data = response.data;
 
-      if (res?.assistant) {
-        setMessages((prev) => [...prev, { role: "assistant", text: res.assistant.text }]);
-
-        // Support actions like show_plan, etc.
-        if (res.assistant.action) {
-          setMessages((prev) => [
-            ...prev,
-            {
-              role: "system",
-              text: "🔧 ACTION TRIGGERED: " + JSON.stringify(res.assistant.action, null, 2)
-            }
-          ]);
+      if (data.status === "needs_more_info") {
+        setMessages((prev) => [...prev, { role: "assistant", text: data.question }]);
+      } else if (data.status === "success") {
+        if (data.intent === "plan_trip" && data.trip) {
+          setMessages((prev) => [...prev, { role: "assistant", text: "Your trip is ready! Take a look below." }]);
+          setItinerary(data.trip.itinerary);
+          setBudgetInfo(data.trip.budget_info);
+        } else if (data.answer) {
+          setMessages((prev) => [...prev, { role: "assistant", text: data.answer }]);
         }
-
-      } else {
-        setMessages((prev) => [
-          ...prev,
-          { role: "assistant", text: "Hmm, I couldn't understand that. Try again?" }
-        ]);
       }
 
     } catch (error) {
       console.error(error);
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", text: "❌ Error connecting to server. Try again later." }
+        { role: "assistant", text: "❌ Error connecting to the AI brain. Try again later." }
       ]);
     }
 
@@ -116,12 +114,44 @@ function Chatbot() {
         )}
       </div>
 
+      {itinerary && (
+        <div style={{ marginTop: 20 }}>
+          <h2>Planned Itinerary — {itinerary.destination}</h2>
+          
+          {budgetInfo && (
+            <div style={{ background: '#e0f7fa', padding: 15, borderRadius: 8, marginBottom: 15 }}>
+              <h4>💰 Budget Summary ({budgetInfo.comfort_level})</h4>
+              <p>Score: {budgetInfo.score}/10 | Daily PP: ${budgetInfo.daily_budget_per_person}</p>
+            </div>
+          )}
+
+          <MapView
+            activities={itinerary.days.flatMap(d => [
+              { name: d.morning.name || d.morning, lat: d.morning.lat, lon: d.morning.lon, type: 'morning' },
+              { name: d.afternoon.name || d.afternoon, lat: d.afternoon.lat, lon: d.afternoon.lon, type: 'afternoon' },
+              { name: d.evening.name || d.evening, lat: d.evening.lat, lon: d.evening.lon, type: 'evening' },
+            ])}
+            destination={itinerary.destination}
+            hotels={itinerary.hotels || []}
+          />
+
+          {itinerary.days.map((d) => (
+            <div key={d.date} style={{ border: '1px solid #ddd', padding: 10, margin: '8px 0' }}>
+              <h3>Day {d.day} — {d.date}</h3>
+              <p><strong>Morning:</strong> {typeof d.morning === 'string' ? d.morning : d.morning.name}</p>
+              <p><strong>Afternoon:</strong> {typeof d.afternoon === 'string' ? d.afternoon : d.afternoon.name}</p>
+              <p><strong>Evening:</strong> {typeof d.evening === 'string' ? d.evening : d.evening.name}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
       <div style={{ display: "flex", gap: "10px" }}>
         <textarea
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           onKeyDown={onKeyPress}
-          placeholder="Ask me anything — e.g., 'Plan a 5-day Tokyo trip, budget 2000'"
+          placeholder="Ask me anything about travel, or say 'Plan a trip to Tokyo'"
           style={{
             flex: 1,
             padding: "10px",

@@ -35,6 +35,21 @@ RELATIVE_DATE_WORDS = {
     "next","coming"
 }
 
+
+def _extract_duration_days(query: str):
+    """Extract trip duration from phrases like '3 day trip' or '2 weeks'."""
+    ql = query.lower()
+    match = re.search(r"(\d+)\s*(day|days|night|nights)\b", ql)
+    if match:
+        days = int(match.group(1))
+        return max(1, days)
+
+    match = re.search(r"(\d+)\s*(week|weeks)\b", ql)
+    if match:
+        return max(1, int(match.group(1)) * 7)
+
+    return None
+
 # ==========================================================
 # DESTINATION EXTRACTION
 # ==========================================================
@@ -71,6 +86,8 @@ def extract_dates(query: str):
     today = datetime.date.today()
     settings = {"PREFER_DATES_FROM": "future", "RELATIVE_BASE": datetime.datetime.now()}
     ql = query.lower()
+    q_no_budget = _strip_budget_like_text(query).lower()
+    duration_days = _extract_duration_days(query)
 
     start_date, end_date = None, None
 
@@ -90,6 +107,18 @@ def extract_dates(query: str):
         start = today + datetime.timedelta(days=days_ahead)
         end = start + datetime.timedelta(days=1)
         return start.strftime("%Y-%m-%d"), end.strftime("%Y-%m-%d"), 2
+
+    # --- Duration-only requests: "3 day trip", "2 week vacation" ---
+    has_explicit_date_hint = bool(
+        re.search(r"\b(?:jan|january|feb|february|mar|march|apr|april|may|jun|june|jul|july|aug|august|sep|sept|september|oct|october|nov|november|dec|december)\b", q_no_budget)
+        or re.search(r"\b(?:today|tomorrow|tonight|next week|next weekend|this week|this month)\b", q_no_budget)
+        or re.search(r"\b\d{1,2}(?:st|nd|rd|th)?\s+(?:of\s+)?(?:jan|january|feb|february|mar|march|apr|april|may|jun|june|jul|july|aug|august|sep|sept|september|oct|october|nov|november|dec|december)\b", q_no_budget)
+    )
+
+    if duration_days and not has_explicit_date_hint and not re.search(r"\bfrom\b|\bbetween\b", ql):
+        start_date = today + datetime.timedelta(days=1)
+        end_date = start_date + datetime.timedelta(days=duration_days - 1)
+        return start_date.strftime("%Y-%m-%d"), end_date.strftime("%Y-%m-%d"), duration_days
 
     # --- Explicit ranges: "May 5-10 2025" ---
     range_match = re.search(r"([A-Za-z]+)\s+(\d{1,2})(?:st|nd|rd|th)?\s*[-–]\s*(\d{1,2})(?:,?\s*(\d{4}))?", query)
@@ -140,7 +169,7 @@ def extract_dates(query: str):
     # --- Normalize dates ---
     if start_date:
         if not end_date:
-            end_date = start_date + datetime.timedelta(days=3)
+            end_date = start_date + datetime.timedelta(days=(duration_days - 1) if duration_days else 3)
         if end_date < start_date:
             start_date, end_date = end_date, start_date
         explicit_year = bool(re.search(r"\b\d{4}\b", query))
@@ -151,6 +180,10 @@ def extract_dates(query: str):
         end_date = end_date.strftime("%Y-%m-%d")
         trip_duration = (datetime.datetime.strptime(end_date, "%Y-%m-%d") -
                          datetime.datetime.strptime(start_date, "%Y-%m-%d")).days + 1
+        if duration_days and (trip_duration <= 0 or trip_duration > 60):
+            end_date_dt = datetime.datetime.strptime(start_date, "%Y-%m-%d").date() + datetime.timedelta(days=duration_days - 1)
+            end_date = end_date_dt.strftime("%Y-%m-%d")
+            trip_duration = duration_days
         return start_date, end_date, trip_duration
 
     return None, None, None

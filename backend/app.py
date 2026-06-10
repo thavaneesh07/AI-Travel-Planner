@@ -7,12 +7,12 @@ from pydantic import BaseModel
 from typing import List, Optional
 
 # Routers
-from routes import suggestions, hotels, chat
+from .routes import suggestions, hotels, chat
 
 # Local modules
-from nlp.nlp_parser import parse_user_query
-from itinerary.itinerary_generator import generate_itinerary
-from api.weather_service import get_weather_forecast
+from .nlp.nlp_parser import parse_user_query
+from .itinerary.itinerary_generator import generate_itinerary
+from .api.weather_service import get_weather_forecast
 
 app = FastAPI(title="AI Travel Planner - Phase 3")
 
